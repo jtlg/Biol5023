@@ -1,0 +1,111 @@
+---
+title: "Electrotarsogram Responses of *Varroa destructor*, a Primary Pest of Western Honey Bees (*Apis mellifera* L.)"
+author: "Michael Light & Joel Goodwin"
+date: '2018-01-30'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Introduction
+
+##Background Information
+Honeybees are very important organisms to the world at large. Honeybees are important pollinators of flowering plants, and thus are essential to the agriculture industry. Despite their vital importance, honeybee populations have been declining for nearly thirty years. One of the main reasons for this decline in honeybee numbers is the Varroa mite (*Varroa destructor*), an external parasite of honeybees. Varroa mites are responsible for causing Varroosis in honeybees, weakening adult bees by feeding on their haemolymph and thereby increasing their susceptibility to other diseases.
+The current protocol in place to help rid honeybee colonies of Varroa mites is through miticides. However, this method of pest control is not sustainable as the use of miticides may further weaken the honeybees or contaminate hive products. More importantly, an increase in resistance to miticides by Varroa mites has been seen. Consequently, it is imperative to develop a new means of controlling these pests to increase honeybee populations in the long term.  
+
+##Research Objectives
+This research aims to examine various odorants and their effects on both Varroa mites and honeybees to analyze their attractant or repellent properties on the two species. Additionally, the effects of the odorants on honeybee and Varroa mite behaviour, as well as effects on in-hive production, will be examined.  
+
+The outcome of this research project will be to implement the use of odorants as a more sustainable means of controlling Varroa mite populations, without the use of toxic pesticides. Successful implementation of the results of this study could help slow the decline of honeybee populations worldwide by decreasing the presence of Varroa mites in honeybee colonies.  
+
+##Progress
+Over the summer, Mike conducted electrotarsograms (ETGs) on Varroa mites to examine their physiological sensitivity to several previously identified attractive odourants.  
+
+ETGs on Varroa mites were conducted using single odourants previously identified as evoking a response in Varroa mites, and were tested in four different concentrations (10ng, 1ng, 100μg, 10μg). These are typical concentrations used in ETG studies and often encompass concentrations close to what Varroa mites would encounter in their natural environment. Relative to a control stimulus, these reactions can be used to infer the relative importance of each odourant to Varroa mites in the hive environment.  
+
+##Questions
+The questions we want to answer from the dataset are as follows:  
+1. Are there mite trials that are outliers?  
+2. Are there trends in odour reactions?  
+3. Are there concentration-dependent trends?  
+4. Can we quantify and account for between-trial (between-mite) variability?  
+
+#Loading Data and Packages
+```{r, echo=FALSE}
+setwd("/Users/joelgoodwin/Google Drive/School/Masters/Classes/Biol 5023- Research Methods II/VarroaETG_Percent")
+```
+```{r, echo=TRUE}
+library(knitr)
+library(ggplot2)
+library(dplyr)
+
+data<- read.csv('DataForR.csv')
+```
+###Look at Data
+```{r, echo=TRUE}
+str(data)
+summary(data)
+```
+
+```{r}
+hist(data$normalized,xlab="Normalized ETG Response",ylab="Frequency", main="Frequency of Normalized ETG Responses")
+
+```  
+  
+Doing this produces a histogram of the percent reaction by Varroa mites. This is an easy way to see how the data is distributed. 
+
+##Changing Trial number and Concentration to Factors
+```{r}
+#change integer to factor for trials
+data$trial<-factor(data$trial)
+
+#lists the levels of factors
+levels(data$trial)
+
+#change number to factor for concentration "conc"
+data$conc<-factor(data$conc)
+levels(data$conc)
+
+#looking to see what the types of odour are
+levels(data$odour)
+```
+
+#Creating a Faceted Plot for All Odours at All Concentrations
+##Step1: Filter Out Bad Runs
+We discovered that these runs were highly variable and produced messy plots, so we will remove them for now.
+```{r}
+temp1<-subset(data, odour != "1-Hexadecanol")
+temp2<-subset(temp1, odour != "Methyl Palmitate")
+temp3<-subset(temp2, odour != "Hexane")
+good_runs<-subset(temp3, odour != "Palmitic Acid")
+```
+##Step2: Normalize Scores at Zero Instead of 100
+```{r}
+subsetted <- mutate(good_runs,
+                    Zresponse = normalized - 100)
+```
+###Look at Normalized Data Distribution
+```{r}
+hist(subsetted$Zresponse,xlab="Normalized ETG Response",ylab="Frequency", main="Frequency of Normalized ETG Responses")
+```
+
+##Step3: Filter Out Negative Responses
+A negative response makes no sense physiologically, so this is an indication of a bad run. We remove these negative values from analysis.
+```{r}
+nonegatives <- subsetted %>%
+  mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
+str(nonegatives)
+```
+##Step4: Make the Plot
+Now that we have manipulated the data in a way that is useful to us, we will make our faceted plot.
+```{r}
+ggplot(nonegatives)+
+  geom_boxplot(aes(x=conc,y= Zresponse, group= conc))+
+  xlab("Concentration")+ylab("Normalized Percent Reaction")+ggtitle("Faceted ETG Plots")+
+  theme_bw(10)+
+  facet_wrap(~odour)
+```
+  
+From this plot, we can see the overall trend in ETG responses from Varroa mites at each concentration for each compound tested.
