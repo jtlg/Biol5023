@@ -69,24 +69,24 @@ Doing this produces a histogram of the percent reaction by Varroa mites. This is
 my.df <- mutate()
 
 #change integer to factor for trials
-data$trial<-factor(data$trial)
+my.df$trial<-factor(my.df$trial)
 
 #lists the levels of factors
-levels(data$trial)
+levels(my.df$trial)
 
 #change number to factor for concentration "conc"
-data$conc<-factor(data$conc)
-levels(data$conc)
+my.df$conc<-factor(my.df$conc)
+levels(my.df$conc)
 
 #looking to see what the types of odour are
-levels(data$odour)
+levels(my.df$odour)
 ```
 
 #Creating a Faceted Plot for All Odours at All Concentrations
 ##Step1: Filter Out Bad Runs
 We discovered that these runs were highly variable and produced messy plots, so we will remove them for now.
 ```{r}
-temp1<-subset(data, odour != "1-Hexadecanol")
+temp1<-subset(my.df, odour != "1-Hexadecanol")
 temp2<-subset(temp1, odour != "Methyl Palmitate")
 temp3<-subset(temp2, odour != "Hexane")
 good_runs<-subset(temp3, odour != "Palmitic Acid")
