@@ -1,6 +1,5 @@
 # ---- Load Data and Packages ----
 getwd()
-
 library(lubridate)
 library(knitr)
 library(ggplot2)
@@ -315,3 +314,5 @@ ggplot(nonegatives)+
   xlab("Concentration")+ylab("Normalized Percent Reaction")+ggtitle("Faceted ETG Plots")+
   theme_bw(10)+
   facet_wrap(~odour)
+
+
