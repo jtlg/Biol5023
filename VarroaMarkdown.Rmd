@@ -79,6 +79,7 @@ my.df$conc<-factor(my.df$conc)
 levels(my.df$conc)
 
 #looking to see what the types of odour are
+my.df$odour<-factor(my.df$odour)
 levels(my.df$odour)
 ```
 
@@ -99,6 +100,7 @@ subsetted <- mutate(good_runs,
 ###Look at Normalized Data Distribution
 ```{r}
 hist(subsetted$Zresponse,xlab="Normalized ETG Response",ylab="Frequency", main="Frequency of Normalized ETG Responses")
+
 ```
 
 ##Step3: Filter Out Negative Responses
