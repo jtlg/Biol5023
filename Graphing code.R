@@ -316,3 +316,55 @@ ggplot(nonegatives)+
   facet_wrap(~odour)
 
 
+
+
+
+# ---- Correlational Tests (paired) for Temp-Humid-Time-Day-ETG ----
+library(tidyverse)
+absoluteweather$conc <- factor(absoluteweather$conc)
+absoluteweather$trial <- factor(absoluteweather$trial)
+str(absoluteweather)
+
+ggplot(data = absoluteweather, mapping = aes(humid, absamp)) + 
+  geom_jitter(aes(colour = absoluteweather$trial), width = 0.25) +
+  ggtitle("amplitude vs humidity")
+
+ggplot(data = absoluteweather, mapping = aes(temp, absamp)) + 
+  geom_jitter(aes(colour = absoluteweather$trial), width = 0.25) +
+  ggtitle("amplitude vs temperature")
+
+ggplot(data = absoluteweather, mapping = aes(dewp, absamp)) + 
+  geom_jitter(aes(colour = absoluteweather$trial), width = 0.25) +
+  ggtitle("amplitude vs dewp")
+
+# garbage
+ggplot(data = absoluteweather, mapping = aes(trial, absamp)) + 
+  geom_jitter(aes(colour = absoluteweather$odour), width = 0.25) +
+  ggtitle("amplitude vs trial")
+
+# histogram
+ggplot(data = absoluteweather, mapping = aes(absamp))+
+  geom_histogram(bins = 50)
+
+# correlations
+cor(absoluteweather$absamp, absoluteweather$temp)
+cov(absoluteweather$absamp, absoluteweather$temp)
+# correlational test to temperature
+corr_amp_tempr <- cor.test(x=absoluteweather$absamp, 
+                           y=absoluteweather$temp, method = 'spearman')
+corr_amp_tempr
+
+corr_amp_humid <- cor.test(x=absoluteweather$absamp, 
+                           y=absoluteweather$humid, method = 'spearman')
+corr_amp_humid
+
+corr_amp_dewp<- cor.test(x=absoluteweather$absamp, 
+                         y=absoluteweather$dewp, method = 'spearman')
+corr_amp_dewp
+
+
+library(fifer)
+spearman.plot(absoluteweather$absamp, absoluteweather$temp)
+weather_matrix <- data.matrix(absoluteweather[7:10], rownames.force = NA)
+
+pairs(weather_matrix) # plots all the stuff simultaneiously
