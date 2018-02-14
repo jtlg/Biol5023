@@ -67,7 +67,6 @@ Doing this produces a histogram of the percent reaction by Varroa mites. This is
 ##Changing Trial number and Concentration to Factors
 ```{r}
 
-my.df <- mutate()
 
 #change integer to factor for trials
 my.df$trial<-factor(my.df$trial)
@@ -88,10 +87,9 @@ levels(my.df$odour)
 ##Step1: Filter Out Bad Runs
 We discovered that these runs were highly variable and produced messy plots, so we will remove them for now.
 ```{r}
-temp1<-subset(my.df, odour != "1-Hexadecanol")
-temp2<-subset(temp1, odour != "Methyl Palmitate")
-temp3<-subset(temp2, odour != "Hexane")
-good_runs<-subset(temp3, odour != "Palmitic Acid")
+good_runs<- filter(my.df,
+                    !(odour %in% c("1-Hexadecanol", "Methyl Palmitate", "Hexane",   "Palmitic Acid" )))
+
 ```
 ##Step2: Normalize Scores at Zero Instead of 100
 ```{r}
@@ -122,3 +120,72 @@ ggplot(nonegatives)+
 ```
   
 From this plot, we can see the overall trend in ETG responses from Varroa mites at each concentration for each compound tested.
+
+##Step5: Taking temperature and humidity into account
+
+```{r, echo=TRUE}
+absoluteweather<- read.csv('absoluteweather.csv')
+
+library(tidyverse)
+absoluteweather$conc <- factor(absoluteweather$conc)
+absoluteweather$trial <- factor(absoluteweather$trial)
+str(absoluteweather)
+
+ggplot(data = absoluteweather, mapping = aes(humid, absamp)) + 
+  geom_jitter(aes(colour = absoluteweather$trial), width = 0.25) +
+  ggtitle("amplitude vs humidity")
+
+```
+
+```{r, echo= TRUE}
+ggplot(data = absoluteweather, mapping = aes(temp, absamp)) + 
+  geom_jitter(aes(colour = absoluteweather$trial), width = 0.25) +
+  ggtitle("amplitude vs temperature")
+```
+
+```{r, echo= TRUE}
+ggplot(data = absoluteweather, mapping = aes(dewp, absamp)) + 
+  geom_jitter(aes(colour = absoluteweather$trial), width = 0.25) +
+  ggtitle("amplitude vs dewp")
+```
+
+```{r}
+ggplot(data = absoluteweather, mapping = aes(absamp))+
+  geom_histogram(bins = 50)
+```
+
+```{r}
+# correlations
+cor(absoluteweather$absamp, absoluteweather$temp)
+cov(absoluteweather$absamp, absoluteweather$temp)
+```
+
+```{r}
+corr_amp_tempr <- cor.test(x=absoluteweather$absamp, 
+                           y=absoluteweather$temp, method = 'spearman')
+corr_amp_tempr
+```
+
+```{r}
+corr_amp_humid <- cor.test(x=absoluteweather$absamp, 
+                           y=absoluteweather$humid, method = 'spearman')
+corr_amp_humid
+```
+
+```{r}
+corr_amp_dewp<- cor.test(x=absoluteweather$absamp, 
+                         y=absoluteweather$dewp, method = 'spearman')
+corr_amp_dewp
+```
+
+
+```{r}
+library(fifer)
+spearman.plot(absoluteweather$absamp, absoluteweather$temp)
+weather_matrix <- data.matrix(absoluteweather[7:10], rownames.force = NA)
+```
+
+```{r}
+pairs(weather_matrix) # plots all the stuff simultaneiously
+```
+
