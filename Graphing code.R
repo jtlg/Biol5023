@@ -320,6 +320,8 @@ ggplot(nonegatives)+
 
 
 # ---- Correlational Tests (paired) for Temp-Humid-Time-Day-ETG ----
+absoluteweather<- read.csv('absoluteweather.csv')
+
 library(tidyverse)
 absoluteweather$conc <- factor(absoluteweather$conc)
 absoluteweather$trial <- factor(absoluteweather$trial)
