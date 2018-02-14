@@ -389,3 +389,7 @@ ggplot(data = nonegatives, aes(min, absamp))+
   xlab("Time")+ylab("Absamp")+ggtitle("Faceted ETG Plots")+
   theme_bw(10)+
   facet_wrap(~trial)
+
+# plot of the normalized data
+ggplot(data = nonegatives, mapping = aes(Zresponse))+
+  geom_histogram(bins = 50)
