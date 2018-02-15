@@ -28,9 +28,10 @@ ETGs on Varroa mites were conducted using single odourants previously identified
 
 ##Questions
 The questions we want to answer from the dataset are as follows:  
-1. Are there mite trials that are outliers?  
-2. Are there trends in odour reactions?  
+1. Are there mite trials that are outliers? 
+2. Are there odours which consistantly evoke a response?  
 3. Are there concentration-dependent trends?  
+ - do mites become habituated to odours of a given concentration?
 4. Can we quantify and account for between-trial (between-mite) variability?  
 
 #Loading Data and Packages

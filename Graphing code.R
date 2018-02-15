@@ -370,3 +370,26 @@ spearman.plot(absoluteweather$absamp, absoluteweather$temp)
 weather_matrix <- data.matrix(absoluteweather[7:10], rownames.force = NA)
 
 pairs(weather_matrix) # plots all the stuff simultaneiously
+
+
+
+# ---- Plotting Time-Normalized Data Faceted by Trial ----
+# Step1: Normalize scores at zero
+subsetted <- mutate(absoluteweather,
+                    Zresponse = normalized - 100)
+
+# Step2: Filter out negative responses
+nonegatives <- subsetted %>%
+  mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
+str(nonegatives$Zresponse)
+
+# Polt that SOAB
+ggplot(data = nonegatives, aes(min, absamp))+
+  geom_jitter(aes(colour = nonegatives$odour), width = 0.25)+
+  xlab("Time")+ylab("Absamp")+ggtitle("Faceted ETG Plots")+
+  theme_bw(10)+
+  facet_wrap(~trial)
+
+# plot of the normalized data
+ggplot(data = nonegatives, mapping = aes(Zresponse))+
+  geom_histogram(bins = 50)
