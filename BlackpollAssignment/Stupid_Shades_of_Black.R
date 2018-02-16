@@ -44,14 +44,14 @@ library(lubridate)
 #---- View the Data Frame -----
 ls(banding_data)
 summary(banding_data)
-
+str(banding_data)
 #---- Collapse Columns to Make the Date Data into a Date ---- 
 banding_data <- given_data %>%
   mutate(date = make_date(year,month, day)) %>%
   mutate(day_of_year= yday(date)) %>%
-  filter(recap== "R")
-
-
+  filter(recap== "R") %>%
+  mutate(month = month(banding_data$month, label = TRUE, abbr = TRUE))
+      
 # mutate(date = make_date(year,month, day))
 
 # Some are recaptured in more than 1 year
@@ -62,11 +62,13 @@ banding_data <- given_data %>%
 # RMD file with graph and code-- echo the code
 library(scales)
 #---- Graph Code ----
+
 ggplot(data = banding_data,mapping = aes(x = day_of_year, y = mass, colour = band), show.legend = FALSE) +
-  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)")+
+  xlab("Time of Year")+ ylab("Mass (in grams, relative to capture date)")+
   geom_point(show.legend = FALSE) +
   geom_line(show.legend = FALSE) +
   facet_wrap(~location) +
+  #scale_x_continuous(month)
   theme_bw()
 
 
