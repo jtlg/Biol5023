@@ -45,7 +45,7 @@ testicle <- group_by(Test, band) %>%
 
 #---- JOEL---------------------------------------------------------------------------------------------- ----
 
-#---- Read in Data and Packages -----
+    #---- Read in Data and Packages -----
 getwd()
 setwd("/Users/joelgoodwin/Google Drive/School/Masters/Classes/Biol 5023- Research Methods II/VarroaETG_Percent/Biol5023/BlackpollAssignment")
 given_data<- readRDS("blpw.all.RDS")
@@ -54,11 +54,11 @@ library(ggplot2)
 library(tidyverse)
 library(dplyr)
 library(lubridate)
-#---- View the Data Frame -----
+    #---- View the Data Frame -----
 ls(banding_data)
 summary(banding_data)
 
-#---- Collapse Columns to Make the Date Data into a Date ---- 
+    #---- Collapse Columns to Make the Date Data into a Date ---- 
 banding_data <- given_data %>%
   mutate(date = make_date(year,month, day)) %>%
   mutate(yday(date)) %>%
@@ -73,7 +73,7 @@ banding_data <- given_data %>%
 # individually hand in assignment on ACORN
 # RMD file with graph and code-- echo the code
 
-#---- Graph Code ----
+    #---- Graph Code ----
 ggplot(data = banding_data,mapping = aes(x = day_of_year, y = mass, colour = band), show.legend = FALSE) +
   -  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)")+
   +  xlab("Time of Year")+ ylab("Mass (in grams, relative to capture date)")+
