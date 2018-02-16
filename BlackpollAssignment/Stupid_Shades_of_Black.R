@@ -62,6 +62,7 @@ summary(banding_data)
 banding_data <- given_data %>%
   mutate(date = make_date(year,month, day)) %>%
   mutate(yday(date)) %>%
+  #mutate(month = month(banding_data$month, label = TRUE, abbr = TRUE)) %>%
   filter(recap== "R")
 # mutate(date = make_date(year,month, day))
 
@@ -73,22 +74,13 @@ banding_data <- given_data %>%
 # RMD file with graph and code-- echo the code
 
 #---- Graph Code ----
-ggplot(banding_data)+
-  geom_point(aes(x= yday(date),y= mass, color= band), show.legend = FALSE)+
-  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)")+
-  theme_bw(10)+
-  facet_wrap(~location)
-
-scale_x_date(labels = date_format("%d"), breaks="1 day")+
-
-# A different approach
-ggplot(data = banding_data,mapping = aes(x = yday(date), y = mass, colour = band), show.legend = FALSE) +
-  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)")+
+ggplot(data = banding_data,mapping = aes(x = day_of_year, y = mass, colour = band), show.legend = FALSE) +
+  -  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)")+
+  +  xlab("Time of Year")+ ylab("Mass (in grams, relative to capture date)")+
   geom_point(show.legend = FALSE) +
   geom_line(show.legend = FALSE) +
   facet_wrap(~location) +
+  +  #scale_x_continuous(month)
   theme_bw()
-
-
 
 
