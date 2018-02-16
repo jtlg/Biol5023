@@ -44,6 +44,7 @@ summary(banding_data)
 #---- Collapse Columns to Make the Date Data into a Date ---- 
 banding_data <- given_data %>%
   mutate(date = make_date(year,month, day)) %>%
+  mutate(yday(date)) %>%
   filter(recap== "R")
 # mutate(date = make_date(year,month, day))
 
@@ -59,7 +60,7 @@ banding_data <- given_data %>%
 
 #---- Graph Code ----
 ggplot(banding_data)+
-  geom_point(aes(x= year,y= mass, color= band, group= band), show.legend = FALSE)+
+  geom_point(aes(x= yday(date),y= mass, color= band, group= band), show.legend = FALSE)+
   xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)")+
   theme_bw(10)+
   facet_wrap(~location)
