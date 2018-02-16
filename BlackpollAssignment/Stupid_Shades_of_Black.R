@@ -48,8 +48,10 @@ summary(banding_data)
 #---- Collapse Columns to Make the Date Data into a Date ---- 
 banding_data <- given_data %>%
   mutate(date = make_date(year,month, day)) %>%
-  mutate(yday(date)) %>%
+  mutate(day_of_year= yday(date)) %>%
   filter(recap== "R")
+
+
 # mutate(date = make_date(year,month, day))
 
 # Some are recaptured in more than 1 year
@@ -58,24 +60,14 @@ banding_data <- given_data %>%
 # Work in groups
 # individually hand in assignment on ACORN
 # RMD file with graph and code-- echo the code
-
+library(scales)
 #---- Graph Code ----
-ggplot(banding_data)+
-  geom_point(aes(x= yday(date),y= mass, color= band), show.legend = FALSE)+
-  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)")+
-  theme_bw(10)+
-  facet_wrap(~location)
-
-scale_x_date(labels = date_format("%d"), breaks="1 day")+
-
-# A different approach
-ggplot(data = banding_data,mapping = aes(x = yday(date), y = mass, colour = band), show.legend = FALSE) +
+ggplot(data = banding_data,mapping = aes(x = day_of_year, y = mass, colour = band), show.legend = FALSE) +
   xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)")+
   geom_point(show.legend = FALSE) +
   geom_line(show.legend = FALSE) +
   facet_wrap(~location) +
   theme_bw()
-
 
 
 
