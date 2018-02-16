@@ -1,3 +1,4 @@
+#---- MIKE---------------------------------------------------------------------------------------------- ------
 library(tidyverse)
 
 str(blpw.all$band)
@@ -28,6 +29,52 @@ if(blpw.all$recap == "R" & blpw.all$year | blpw.all$month | blpw.all$day <),
 
 
 
+
+#---- JOEL---------------------------------------------------------------------------------------------- ----
+
+#---- Read in Data and Packages -----
+getwd()
+setwd("/Users/joelgoodwin/Google Drive/School/Masters/Classes/Biol 5023- Research Methods II/VarroaETG_Percent/Biol5023/BlackpollAssignment")
+given_data<- readRDS("blpw.all.RDS")
+
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+#---- View the Data Frame -----
+ls(banding_data)
+summary(banding_data)
+
+#---- Collapse Columns to Make the Date Data into a Date ---- 
+banding_data <- given_data %>%
+  mutate(date = make_date(year,month, day)) %>%
+  mutate(yday(date)) %>%
+  filter(recap== "R")
+# mutate(date = make_date(year,month, day))
+
+# Some are recaptured in more than 1 year
+# Whats relevant is how much they gain in a particular year
+# Gain in mass over time for birds that have been recaptured
+# Work in groups
+# individually hand in assignment on ACORN
+# RMD file with graph and code-- echo the code
+
+#---- Graph Code ----
+ggplot(banding_data)+
+  geom_point(aes(x= yday(date),y= mass, color= band), show.legend = FALSE)+
+  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)")+
+  theme_bw(10)+
+  facet_wrap(~location)
+
+scale_x_date(labels = date_format("%d"), breaks="1 day")+
+
+# A different approach
+ggplot(data = banding_data,mapping = aes(x = yday(date), y = mass, colour = band), show.legend = FALSE) +
+  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)")+
+  geom_point(show.legend = FALSE) +
+  geom_line(show.legend = FALSE) +
+  facet_wrap(~location) +
+  theme_bw()
 
 
 

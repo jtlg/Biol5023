@@ -20,22 +20,17 @@
 # you can rename while you're selecting
 
 
-# ------ TO Do------
+# ------ TO DO ------
 # Lines 88-92 in RMD-- do it with mutate
 # Assignment
 # Update html
-
-
-
-
-
-
-
-
-
-
-
-
+# facet temp/humidity and amplitude graphs by trial
+# are there true outliers?
+# Make a by time plot of amplitudes
+# Use negative abs amp to attest to how bad the trial is
+# REPLICATE EXCEL GRAPH OF TRIAL LENGTH IN R
+# Read ch 16- be familiar with lubridate
+# Reread sectuin 3
 
 
 
