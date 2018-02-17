@@ -54,16 +54,31 @@ library(ggplot2)
 library(tidyverse)
 library(dplyr)
 library(lubridate)
+library(scales)
+
     #---- View the Data Frame -----
 ls(banding_data)
 summary(banding_data)
-
+str(banding_data)
     #---- Collapse Columns to Make the Date Data into a Date ---- 
+
 banding_data <- given_data %>%
-  mutate(date = make_date(year,month, day)) %>%
-  mutate(yday(date)) %>%
-  #mutate(month = month(banding_data$month, label = TRUE, abbr = TRUE)) %>%
-  filter(recap== "R")
+  mutate(date = make_date(year,month, day), format(as.Date(banding_data$date), "%m/%d")) %>%
+  mutate(yday = (yday(date))) %>%
+  filter(recap== "R") 
+
+format(as.Date(banding_data$date), format="%m-%d") 
+as.Date(banding_data$date)
+as.Date(banding_data$yday)
+#Code from internet to remove year from date
+format(as.Date(banding_data$date), "%m/%d")
+#mutate(yday = yday(date)) 
+#mutate(yday(date)) %>%
+#mutate(month = month(banding_data$month, label = TRUE, abbr = TRUE)) %>%
+update.packages()
+  
+
+mutate(given_data, format(banding_data$date, format="%m-%d")) 
 # mutate(date = make_date(year,month, day))
 
 # Some are recaptured in more than 1 year
@@ -74,13 +89,13 @@ banding_data <- given_data %>%
 # RMD file with graph and code-- echo the code
 
     #---- Graph Code ----
-ggplot(data = banding_data,mapping = aes(x = day_of_year, y = mass, colour = band), show.legend = FALSE) +
-  -  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)")+
-  +  xlab("Time of Year")+ ylab("Mass (in grams, relative to capture date)")+
+ggplot(data = banding_data,mapping = aes(x = yday, y = mass, colour = band), show.legend = FALSE) +
+  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
   geom_point(show.legend = FALSE) +
   geom_line(show.legend = FALSE) +
   facet_wrap(~location) +
-  +  #scale_x_continuous(month)
+  scale_x_date(breaks = date_breaks("months"), labels = date_format("%m")) +
+  #scale_x_date(date_breaks ="1 month", date_labels = "%m")+
+  #scale_x_date(labels = date_format("%m"), breaks = date_breaks("1 month"))+
   theme_bw()
-
 
