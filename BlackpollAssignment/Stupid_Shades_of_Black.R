@@ -12,7 +12,7 @@ recap <-  blpw.all %>% group_by(band, location) %>% filter(n()>1)
 # R in the recapture column, which is good to know... now
 
 table(recap$location) # good there are only two locations (thank you)
-
+recap <- ungroup(recap)
 # select thoes on Seal Island
 seal <- filter(recap, location == "ABO-SI")
 bp <- filter(recap, location == "ABO-BP")
@@ -26,25 +26,46 @@ bp <- filter(recap, location == "ABO-BP")
 # im just dicken around here with no clue what I actually want
 # if(blpw.all$recap == "R" & blpw.all$year | blpw.all$month | blpw.all$day <), 
 library(reshape2)
-Test <- select (seal, band, mass, year, month, day)
+seal <- select (seal, band, mass, year, month, day)
 # Test <- melt(seal)
 # Test <- dcast(seal, year ~ band, value="band")
-Test <-  Test %>% group_by(band, year, month, day)
-
+# seal <-  seal %>% group_by(band, year, month, day)
+# seal <- ungroup(seal)
 library(lubridate)
-Test$date <- with(Test, ymd(sprintf('%04d%02d%02d', year, month, day))) 
-# woohoo!
-testicle <- group_by(Test, band) %>%
-  arrange(desc(date))
+# creates a date column so we can organize the captures by date
+seal$date <- with(seal, ymd(sprintf('%04d%02d%02d', year, month, day))) 
+
+# dont need the arrange really
+testicle <- group_by(seal, band) #%>%
+  #arrange(desc(date))
 
 # trying to add a conditional mutate so that we can 
 # subtract the mass of early from later, beyond my abilities
-
 # topline group 
-top_n <- top_n(x = testicle, n = -1, wt = mass)
+topn <- top_n(x = testicle, n = -1, wt = date)
+testicle <- ungroup(testicle)
+topn <- ungroup(topn)
 
-ovary <- mutate(testicle, 
-                MinustheBear = mass - top_n(x = testicle, n = -1, wt = mass))
+# renamed column "mass" to "firstmass"
+colnames(topn)[2] <- "firstmass"
+
+# joins the tables together, with the creation of a new row "firstmass"
+# so this one in paricular allows us to duplicate the "firstmass" so we can
+# tell the mutate to subtract column "firstmass" from "mass"
+Test <- left_join(testicle, topn, by = "band")
+
+Test <- ungroup(Test)
+Test <- group_by(Test, band) %>%
+  mutate(sass = mass-firstmass)
+# now, lets mutate this! #boob
+# so it's mutated and the column called "sass" is ready to be plotted
+# I need to do this for the BP island later (double check things are right, ect.)
+
+
+
+
+# no clue
+# ovary <- mutate(testicle, MinustheBear = mass - top_n(x = testicle, n = -1, wt = mass))
 
 #---- JOEL---------------------------------------------------------------------------------------------- ----
 
