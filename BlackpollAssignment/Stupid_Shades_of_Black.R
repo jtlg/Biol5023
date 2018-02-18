@@ -7,7 +7,7 @@ table(blpw.all$band)
 
 # find thoes with band number recorded more than once 
 recaptured <- anyDuplicated(blpw.all$band, fromLast = TRUE)
-recap <-  blpw.all %>% group_by(band) %>% filter(n()>1) 
+recap <-  blpw.all %>% group_by(band, location) %>% filter(n()>1) 
 # no clue how it works, but all the ones recaptured DO have an 
 # R in the recapture column, which is good to know... now
 
@@ -25,7 +25,6 @@ bp <- filter(recap, location == "ABO-BP")
 # find difference in weight from first record
 # im just dicken around here with no clue what I actually want
 # if(blpw.all$recap == "R" & blpw.all$year | blpw.all$month | blpw.all$day <), 
-
 library(reshape2)
 Test <- select (seal, band, mass, year, month, day)
 # Test <- melt(seal)
@@ -36,12 +35,16 @@ library(lubridate)
 Test$date <- with(Test, ymd(sprintf('%04d%02d%02d', year, month, day))) 
 # woohoo!
 testicle <- group_by(Test, band) %>%
-  arrange(desc(date)) %>%
-  mutate_if(band==band,mass)
+  arrange(desc(date))
 
 # trying to add a conditional mutate so that we can 
 # subtract the mass of early from later, beyond my abilities
 
+# topline group 
+top_n <- top_n(x = testicle, n = -1, wt = mass)
+
+ovary <- mutate(testicle, 
+                MinustheBear = mass - top_n(x = testicle, n = -1, wt = mass))
 
 #---- JOEL---------------------------------------------------------------------------------------------- ----
 
