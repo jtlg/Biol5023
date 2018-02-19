@@ -28,8 +28,7 @@ table(blpw.all$band)
 # FIND THOSE BIRDS WITH BAND NUMBER RECORDED MORE THAN ONCE
 recaptured <- anyDuplicated(blpw.all$band, fromLast = TRUE)
 recap <-  blpw.all %>% group_by(band, location) %>% filter(n()>1) 
-      # no clue how it works, but all the ones recaptured DO have an 
-      # R in the recapture column, which is good to know... now
+      # all the ones recaptured DO have an R in the recapture column
 
 # SEPARATE THE DATA ACCORDING TO THE TWO LOCATIONS
 table(recap$location) # good there are only two locations (thank you)
@@ -47,9 +46,12 @@ bp <- filter(recap, location == "ABO-BP")
 #-------- FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT SEAL ISLAND-------------------------------------
 =======
 #----------------FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT SEAL ISLAND-------------------------------------
+<<<<<<< HEAD
 >>>>>>> e0108a6d54a348481b0a2219a9f65dc0d9a80ba8
     # im just dicken around here with no clue what I actually want
     # if(blpw.all$recap == "R" & blpw.all$year | blpw.all$month | blpw.all$day <), 
+=======
+>>>>>>> cd4777980aee3c21ae1cecdd1e6017cb8fb17be8
 library(reshape2)
 seal <- select (seal, band, mass, year, month, day)
     # Test <- melt(seal)
@@ -61,23 +63,18 @@ library(lubridate)
 seal$date <- with(seal, ymd(sprintf('%04d%02d%02d', year, month, day))) 
 
 #GROUP BY BAND NUMBER SO WE CAN FIND DIFFERENCE IN MASS UPON RECAPTURE
-testicle <- group_by(seal, band) #%>%
-    #arrange(desc(date))
-    # dont need the arrange really
+testicle <- group_by(seal, band)
+# %>% arrange(desc(date)) # dont need the arrange really
 
-    # trying to add a conditional mutate so that we can 
-    # subtract the mass of early from later, beyond my abilities
-# topline group 
+#SELECTING BIRDS GROUPED BY BAND OF THE EARLIER DATE OF CAPTURE
 topn <- top_n(x = testicle, n = -1, wt = date)
 testicle <- ungroup(testicle)
 topn <- ungroup(topn)
 
-# renamed column "mass" to "firstmass"
+# RENAMING NEW WEIGHTS COLUMN "mass" TO "firstmass"
 colnames(topn)[2] <- "firstmass"
 
-# joins the tables together, with the creation of a new row "firstmass"
-# so this one in paricular allows us to duplicate the "firstmass" so we can
-# tell the mutate to subtract column "firstmass" from "mass"
+#JOINING THE TABLES TOGETEHER, WHILE DUPLICATING "firstmass"
 Test <- left_join(testicle, topn, by = "band")
 
 Test <- ungroup(Test)
@@ -85,9 +82,7 @@ Test <- group_by(Test, band) %>%
   mutate(sass = mass-firstmass) %>%
   mutate(yday = (yday(date.y)))
   
-# now, lets mutate this! #boob
-# so it's mutated and the column called "sass" is ready to be plotted
-# I need to do this for the BP island later (double check things are right, ect.)
+
 
 # Try graphing this and see what kind of magic happens
 ggplot(data = Test,mapping = aes(x = yday, y = sass, colour = band), show.legend = FALSE) +
