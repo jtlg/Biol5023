@@ -174,10 +174,11 @@ ggplot(data = banding_data,mapping = aes(x = yday(date), y = mass, colour = band
   geom_point(group= banding_data$band, show.legend = FALSE) +
   geom_line(group= banding_data$band, show.legend = FALSE) +
   facet_wrap(~location) +
-  scale_x_date(labels = date_format("%m")) +
+  #scale_x_date(labels = date_format("%m")) +
   #scale_x_date( date_breaks ="1 month", date_labels = "%B")+
   #scale_x_date(labels = date_format("%m"), breaks = date_breaks("1 month"))+
   #scale_x_date(labels = date_format("%m"), date_breaks='1 month') +
   theme_bw()
 str(banding_data)
+
 
