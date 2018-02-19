@@ -1,4 +1,5 @@
 # Some Instructions ---------------------------------------------------------------------- 
+
 # Some are recaptured in more than 1 year
 # Whats relevant is how much they gain in a particular year
 # Gain in mass over time for birds that have been recaptured
@@ -50,24 +51,24 @@ library(lubridate)
 seal$date <- with(seal, ymd(sprintf('%04d%02d%02d', year, month, day))) 
 
 #GROUP BY BAND NUMBER SO WE CAN FIND DIFFERENCE IN MASS UPON RECAPTURE
-testicle <- group_by(seal, band)
+dogfood <- group_by(seal, band, year)
 # %>% arrange(desc(date)) # dont need the arrange really
 
 #SELECTING BIRDS GROUPED BY BAND OF THE EARLIER DATE OF CAPTURE
-topn <- top_n(x = testicle, n = -1, wt = date)
-testicle <- ungroup(testicle)
+topn <- top_n(x = dogfood, n = -1, wt = date)
+dogfood <- ungroup(dogfood)
 topn <- ungroup(topn)
 
 # RENAMING NEW WEIGHTS COLUMN "mass" TO "firstmass"
 colnames(topn)[2] <- "firstmass"
 
 #JOINING THE TABLES TOGETEHER, WHILE DUPLICATING "firstmass"
-Test <- left_join(testicle, topn, by = "band")
+Test <- left_join(dogfood, topn, by = "band")
 
 Test <- ungroup(Test)
 Test <- group_by(Test, band) %>%
   mutate(sass = mass-firstmass) %>%
-  mutate(yday = (yday(date.y)))
+  mutate(yday = (yday(date.x)))
   
 
 
@@ -81,9 +82,6 @@ ggplot(data = Test,mapping = aes(x = yday, y = sass, colour = band), show.legend
 
 str(Test)
 
-
-
-<<<<<<< HEAD
     #---- FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT BON PORTAGE----------------------------
 library(reshape2)
 bp <- select (bp, band, mass, year, month, day)
@@ -145,9 +143,9 @@ library(lubridate)
 library(scales)
 
     #---- View the Data Frame -----
-ls(banding_data)
-summary(banding_data)
-str(banding_data)
+  ls(banding_data)
+  summary(banding_data)
+  str(banding_data)
     #---- Collapse Columns to Make the Date Data into a Date ---- 
 
 banding_data <- given_data %>%
@@ -155,30 +153,31 @@ banding_data <- given_data %>%
   mutate(yday = (yday(date))) %>%
   filter(recap== "R")
 
-format(as.Date(banding_data$date), format="%m-%d") 
+#format things as a date
 as.Date(banding_data$date)
 as.Date(banding_data$yday, origin = "%01")
+
 #Code from internet to remove year from date
-format(as.Date(banding_data$date), "%m/%d")
+banding_data$monthday <- format(as.POSIXct(banding_data$date), "%m/%d")
 #mutate(yday = yday(date)) 
 #mutate(yday(date)) %>%
 #mutate(month = month(banding_data$month, label = TRUE, abbr = TRUE)) %>%
-update.packages()
-  ?as.Date
+
+str(banding_data$monthday)
 
 mutate(given_data, format(banding_data$date, format="%m-%d")) 
 # mutate(date = make_date(year,month, day))
 
     #---- Graph Code ----
-ggplot(data = banding_data,mapping = aes(x = yday(banding_data$date), y = mass, colour = band), show.legend = FALSE) +
+ggplot(data = banding_data,mapping = aes(x = yday(date), y = mass, colour = band), show.legend = FALSE) +
   xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
-  geom_point(show.legend = FALSE) +
-  geom_line(show.legend = FALSE) +
+  geom_point(group= banding_data$band, show.legend = FALSE) +
+  geom_line(group= banding_data$band, show.legend = FALSE) +
   facet_wrap(~location) +
-  #scale_x_date(breaks = date_breaks("months"), labels = date_format("%m")) +
-  #scale_x_date(date_breaks ="1 month", date_labels = "%m")+
+  scale_x_date(labels = date_format("%m")) +
+  #scale_x_date( date_breaks ="1 month", date_labels = "%B")+
   #scale_x_date(labels = date_format("%m"), breaks = date_breaks("1 month"))+
   #scale_x_date(labels = date_format("%m"), date_breaks='1 month') +
   theme_bw()
+str(banding_data)
 
-  
