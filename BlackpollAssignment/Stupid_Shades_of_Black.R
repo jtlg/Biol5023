@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 # Some Instructions ---------------------------------------------------------------------- 
-=======
-#------Some Instructions ---------------------------------------------------------------------- 
->>>>>>> e0108a6d54a348481b0a2219a9f65dc0d9a80ba8
 # Some are recaptured in more than 1 year
 # Whats relevant is how much they gain in a particular year
 # Gain in mass over time for birds that have been recaptured
@@ -10,11 +6,8 @@
 # individually hand in assignment on ACORN
 # RMD file with graph and code-- echo the code
 
-<<<<<<< HEAD
 # Dealing with Location and Mass-------------------------------------------------------------------------------------------- ------
-=======
-#------Dealing with Location and Mass-------------------------------------------------------------------------------------------- ------
->>>>>>> e0108a6d54a348481b0a2219a9f65dc0d9a80ba8
+    #---- Dealing with Location and Mass-------------------------------------------------------------------------------------------- ------
 #LOAD IN NECESSARY PACKAGES
 library(tidyverse)
 library(lubridate)
@@ -43,15 +36,9 @@ bp <- filter(recap, location == "ABO-BP")
 
 
 <<<<<<< HEAD
-#-------- FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT SEAL ISLAND-------------------------------------
-=======
-#----------------FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT SEAL ISLAND-------------------------------------
-<<<<<<< HEAD
->>>>>>> e0108a6d54a348481b0a2219a9f65dc0d9a80ba8
+    #---- FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT SEAL ISLAND-------------------------------------
     # im just dicken around here with no clue what I actually want
     # if(blpw.all$recap == "R" & blpw.all$year | blpw.all$month | blpw.all$day <), 
-=======
->>>>>>> cd4777980aee3c21ae1cecdd1e6017cb8fb17be8
 library(reshape2)
 seal <- select (seal, band, mass, year, month, day)
     # Test <- melt(seal)
@@ -97,10 +84,7 @@ str(Test)
 
 
 <<<<<<< HEAD
-#-------- FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT BON PORTAGE----------------------------
-=======
-#----------------FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT BON PORTAGE----------------------------
->>>>>>> e0108a6d54a348481b0a2219a9f65dc0d9a80ba8
+    #---- FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT BON PORTAGE----------------------------
 library(reshape2)
 bp <- select (bp, band, mass, year, month, day)
 # Test <- melt(seal)
@@ -141,21 +125,13 @@ Bertha <- group_by(Bertha, band) %>%
 # I need to do this for the BP island later (double check things are right, ect.)
 
 
-<<<<<<< HEAD
-#-------- Try graphing this and see what kind of magic happens-------------------------
-=======
-#----------------Try graphing this and see what kind of magic happens-------------------------
->>>>>>> e0108a6d54a348481b0a2219a9f65dc0d9a80ba8
+    #---- Try graphing this and see what kind of magic happens-------------------------
 ggplot(data = Test,mapping = aes(x = yday, y = sass, colour = band), show.legend = FALSE) +
   xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
   geom_point(show.legend = FALSE) +
   geom_line(show.legend = FALSE) +
   theme_bw()
-<<<<<<< HEAD
 # Dealing with Dates------------------------------------------------------------------------------------------- ----
-=======
-#-------Dealing with Dates------------------------------------------------------------------------------------------- ----
->>>>>>> e0108a6d54a348481b0a2219a9f65dc0d9a80ba8
 
     #---- Read in Data and Packages -----
 getwd()
