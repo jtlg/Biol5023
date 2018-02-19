@@ -329,20 +329,24 @@ str(absoluteweather)
 
 ggplot(data = absoluteweather, mapping = aes(humid, absamp)) + 
   geom_jitter(aes(colour = absoluteweather$trial), width = 0.25) +
-  ggtitle("amplitude vs humidity")
+  ggtitle("amplitude vs humidity")+
+  facet_wrap(~trial)
 
 ggplot(data = absoluteweather, mapping = aes(temp, absamp)) + 
   geom_jitter(aes(colour = absoluteweather$trial), width = 0.25) +
-  ggtitle("amplitude vs temperature")
+  ggtitle("amplitude vs temperature")+
+  facet_wrap(~trial)
 
 ggplot(data = absoluteweather, mapping = aes(dewp, absamp)) + 
   geom_jitter(aes(colour = absoluteweather$trial), width = 0.25) +
-  ggtitle("amplitude vs dewp")
+  ggtitle("amplitude vs dewp")+
+  facet_wrap(~trial)
 
 # garbage
-ggplot(data = absoluteweather, mapping = aes(trial, absamp)) + 
+ggplot(data = absoluteweather, mapping = aes(min, absamp)) + 
   geom_jitter(aes(colour = absoluteweather$odour), width = 0.25) +
-  ggtitle("amplitude vs trial")
+  ggtitle("amplitude vs time")+
+  facet_wrap(~trial)
 
 # histogram
 ggplot(data = absoluteweather, mapping = aes(absamp))+
