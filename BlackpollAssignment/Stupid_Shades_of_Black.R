@@ -63,30 +63,30 @@ topn <- ungroup(topn)
 colnames(topn)[2] <- "firstmass"
 
 #JOINING THE TABLES TOGETEHER, WHILE DUPLICATING "firstmass"
-Test <- left_join(dogfood, topn, by = "band")
+brezhnev <- left_join(dogfood, topn, by = "band")
 
-Test <- ungroup(Test)
-Test <- group_by(Test, band) %>%
+brezhnev <- ungroup(brezhnev)
+brezhnev <- group_by(brezhnev, band) %>%
   mutate(sass = mass-firstmass) %>%
   mutate(yday = (yday(date.x)))
   
 
 
 # Try graphing this and see what kind of magic happens
-ggplot(data = Test,mapping = aes(x = yday, y = sass, colour = band), show.legend = FALSE) +
+ggplot(data = brezhnev,mapping = aes(x = yday, y = sass, colour = band), show.legend = FALSE) +
   xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
   geom_point(show.legend = FALSE) +
   geom_line(show.legend = FALSE) +
   theme_bw()
 
 
-str(Test)
+str(brezhnev)
 
     #---- FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT BON PORTAGE----------------------------
 library(reshape2)
 bp <- select (bp, band, mass, year, month, day)
-# Test <- melt(seal)
-# Test <- dcast(seal, year ~ band, value="band")
+# brezhnev <- melt(seal)
+# brezhnev <- dcast(seal, year ~ band, value="band")
 # seal <-  seal %>% group_by(band, year, month, day)
 # seal <- ungroup(seal)
 library(lubridate)
