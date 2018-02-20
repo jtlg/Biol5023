@@ -7,8 +7,7 @@
 # individually hand in assignment on ACORN
 # RMD file with graph and code-- echo the code
 
-# Dealing with Location and Mass-------------------------------------------------------------------------------------------- ------
-    #---- Dealing with Location and Mass-------------------------------------------------------------------------------------------- ------
+#---- Dealing with Location and Mass-------------------------------------------------------------------------------------------- ------
 #LOAD IN NECESSARY PACKAGES
 library(tidyverse)
 library(lubridate)
@@ -36,7 +35,6 @@ bp <- filter(recap, location == "ABO-BP")
 
 
 
-<<<<<<< HEAD
     #---- FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT SEAL ISLAND-------------------------------------
     # im just dicken around here with no clue what I actually want
     # if(blpw.all$recap == "R" & blpw.all$year | blpw.all$month | blpw.all$day <), 
@@ -150,23 +148,11 @@ library(scales)
 
 banding_data <- given_data %>%
   mutate(date = make_date(year,month, day)) %>%
-  mutate(yday = (yday(date))) %>%
+  mutate(jday = (yday(date))) %>%
   filter(recap== "R")
 
 #format things as a date
 as.Date(banding_data$date)
-as.Date(banding_data$yday, origin = "%01")
-
-#Code from internet to remove year from date
-banding_data$monthday <- format(as.POSIXct(banding_data$date), "%m/%d")
-#mutate(yday = yday(date)) 
-#mutate(yday(date)) %>%
-#mutate(month = month(banding_data$month, label = TRUE, abbr = TRUE)) %>%
-
-str(banding_data$monthday)
-
-mutate(given_data, format(banding_data$date, format="%m-%d")) 
-# mutate(date = make_date(year,month, day))
 
     #---- Graph Code ----
 ggplot(data = banding_data,mapping = aes(x = yday(date), y = mass, colour = band), show.legend = FALSE) +
@@ -179,6 +165,25 @@ ggplot(data = banding_data,mapping = aes(x = yday(date), y = mass, colour = band
   #scale_x_date(labels = date_format("%m"), breaks = date_breaks("1 month"))+
   #scale_x_date(labels = date_format("%m"), date_breaks='1 month') +
   theme_bw()
+
 str(banding_data)
+
+    #---- Junk/ In Progress ----
+
+#Code from internet to remove year from date
+banding_data$monthday <- format(as.POSIXct(banding_data$date), "%m/%d")
+#mutate(yday = yday(date)) 
+#mutate(yday(date)) %>%
+#mutate(month = month(banding_data$month, label = TRUE, abbr = TRUE)) %>%
+format(strptime(banding_data$jday, format = "%j"), format= "%m-%d")
+
+
+mutate(given_data, format(banding_data$date, format="%m-%d")) 
+# mutate(date = make_date(year,month, day))
+as.Date(banding_data$jday, format= "%j", origin= "1999-07-08")
+
+# Try and make a new column that has all the same year, then reformat dates, then use the above code
+
+
 
 
