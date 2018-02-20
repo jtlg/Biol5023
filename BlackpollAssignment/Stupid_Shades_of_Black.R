@@ -135,7 +135,7 @@ ggplot(data = Bertha,mapping = aes(x = yday, y = sassy, colour = band), show.leg
 getwd()
 setwd("/Users/joelgoodwin/Google Drive/School/Masters/Classes/Biol 5023- Research Methods II/VarroaETG_Percent/Biol5023/BlackpollAssignment")
 given_data<- readRDS("blpw.all.RDS")
-
+given_data <- blpw.all # (mike just used his imported csv)
 library(ggplot2)
 library(tidyverse)
 library(dplyr)
@@ -181,4 +181,22 @@ ggplot(data = banding_data,mapping = aes(x = yday(date), y = mass, colour = band
   theme_bw()
 str(banding_data)
 
+
+
+# playing with the yday
+#as.Date(215, origin = "1999-01-01")
+#as.Date(304, origin = "1999-12-26")
+
+# makes a column with the year 2000
+monoyear <- rep("2000",times = 295)
+banding_data <- cbind(monoyear, banding_data)
+
+banding_data <- banding_data %>%
+  mutate(monodate = make_date(monoyear,month, day)) %>%
+  mutate(monoyday = (yday(date))) %>%
+  filter(recap== "R")
+# so this produces a new column with te exactly same values as yday... great...
+# yday = monoyday
+as.Date(banding_data$monoyday, origin = "2000-01-01")
+# woohoo it works (why it didn't with the original yday, I have no clue)
 
