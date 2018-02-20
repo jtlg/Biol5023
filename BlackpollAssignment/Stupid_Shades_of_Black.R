@@ -115,8 +115,8 @@ Bertha <- left_join(grumpy_old_man, tops, by = "band")
 
 Bertha <- ungroup(Bertha)
 Bertha <- group_by(Bertha, band) %>%
-  mutate(sassy = mass-firstmass) 
-  #mutate(yday = (yday(date.y)))
+  mutate(sassy = mass-firstmass) %>%
+  mutate(yday = (yday(date.x)))
 
 # now, lets mutate this! #boob
 # so it's mutated and the column called "sass" is ready to be plotted
@@ -124,7 +124,7 @@ Bertha <- group_by(Bertha, band) %>%
 
 
     #---- Try graphing this and see what kind of magic happens-------------------------
-ggplot(data = Test,mapping = aes(x = yday, y = sass, colour = band), show.legend = FALSE) +
+ggplot(data = Bertha,mapping = aes(x = yday, y = sassy, colour = band), show.legend = FALSE) +
   xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
   geom_point(show.legend = FALSE) +
   geom_line(show.legend = FALSE) +
