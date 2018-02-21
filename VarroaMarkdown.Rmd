@@ -35,9 +35,9 @@ The questions we want to answer from the dataset are as follows:
 4. Can we quantify and account for between-trial (between-mite) variability?  
 
 #Loading Data and Packages
-```{r, echo=FALSE}
+
 setwd("/Users/joelgoodwin/Google Drive/School/Masters/Classes/Biol 5023- Research Methods II/VarroaETG_Percent")
-```
+
 ```{r, echo=TRUE}
 
 my.df <- read_csv('DataForR.csv')
@@ -78,7 +78,7 @@ levels(my.df$trial)
 my.df$conc<-factor(my.df$conc)
 levels(my.df$conc)
 
-#looking to see what the types of odour are
+# types of odours
 my.df$odour<-factor(my.df$odour)
 levels(my.df$odour)
 ```
@@ -187,5 +187,27 @@ weather_matrix <- data.matrix(absoluteweather[7:10], rownames.force = NA)
 
 ```{r}
 pairs(weather_matrix) # plots all the stuff simultaneiously
+```
+
+# Plotting absolute amplitude (corrected to Hexane blank) versus time of trial.
+
+Step1: Normalize scores at zero
+```{r, echo = FALSE}
+subsetted <- mutate(absoluteweather,
+                    Zresponse = normalized - 100)
+```
+Step2: Filter out negative responses
+```{r, echo = FALSE}
+nonegatives <- subsetted %>%
+  mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
+str(nonegatives$Zresponse)
+```
+
+```{r, echo = TRUE}
+ggplot(data = nonegatives, aes(min, absamp))+
+  geom_jitter(aes(colour = nonegatives$odour), width = 0.25)+
+  xlab("Time")+ylab("Absamp")+ggtitle("Faceted ETG Plots")+
+  theme_bw(10)+
+  facet_wrap(~trial)
 ```
 
