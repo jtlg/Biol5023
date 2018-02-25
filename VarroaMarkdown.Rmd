@@ -36,7 +36,10 @@ The questions we want to answer from the dataset are as follows:
 
 #Loading Data and Packages
 
+```{r, echo=FALSE}
 setwd("/Users/joelgoodwin/Google Drive/School/Masters/Classes/Biol 5023- Research Methods II/VarroaETG_Percent")
+```
+
 
 ```{r, echo=TRUE}
 
