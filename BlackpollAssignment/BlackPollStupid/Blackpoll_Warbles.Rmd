@@ -4,6 +4,13 @@ author: "Joel"
 date: "2/25/2018"
 output: html_document
 ---
+```{r, echo=TRUE}
+getwd()
+setwd("/Users/joelgoodwin/Google Drive/School/Masters/Classes/Biol 5023- Research Methods II/VarroaETG_Percent/Biol5023/BlackpollAssignment")
+
+blpw.all<- readRDS("blpw.all.RDS")
+blpw.all <- blpw.all # (mike just used his imported csv)
+```
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -15,6 +22,9 @@ require(tidyverse)
 library(tidyverse)
 library(lubridate)
 library(reshape2)
+library(ggplot2)
+library(dplyr)
+library(scales)
 ```
 
 #VISUALIZE THE DATA FRAME
@@ -143,6 +153,104 @@ ggplot(data = Bertha,mapping = aes(x = yday, y = sass, colour = band), show.lege
 ```
 
 
+# --------------------------- Dealing with Dates-----------------
+
+# ---- Re-joining Islands ----
+```{r}
+# now to combine BP with SEAL
+ungroup(Bertha, brezhnev)
+jointest <- full_join(Bertha, brezhnev)
+
+#This works, now need to add the location (island) before this # done
+jointest <- data.frame(jointest)
+
+# ---- making a month-day column using yday ----
+
+monoyear <- rep("2000",times = 259) # makes a column with the year 2000
+
+jointest <- cbind(monoyear, jointest) # adds monoyear (2000) to jointest
+
+str(jointest) #change year 2000 to numeric
+jointest$monoyear <- as.numeric(as.character(jointest$monoyear)) 
+```
+
+# making dates consisting of a single year, so graph works
+```{r}
+jointest <- jointest %>%
+  mutate(monodate = make_date(monoyear,month.x, day.x)) #%>%
+  #mutate(monoyday = (yday(date.x))) %>% # don't need this and also not working, not sure why
+  #filter(recap== "R")
+
+as.Date(jointest$yday, origin = "2000-01-01")
+# checking that the dates are actually the right months this time, using the old yday
+```
+
+# ---- Graphing the whole shibam ----
+```{r, echo = TRUE}
+ggplot(data = jointest,mapping = aes(x = monodate, y = sass, colour = band), show.legend = FALSE) +
+  xlab("Time of Year") + 
+  ylab("Mass (in grams, relative to capture date)") +
+  geom_point(group= jointest$band, show.legend = FALSE) +
+  geom_line(group= jointest$band, show.legend = FALSE) +
+  facet_wrap(~location.x) +
+  #scale_x_date(labels = date_format("%m")) +
+  #scale_x_date( date_breaks ="1 month", date_labels = "%B")+
+  #scale_x_date(labels = date_format("%m"), breaks = date_breaks("1 month"))+
+  #scale_x_date(labels = date_format("%m"), date_breaks='1 month') +
+  theme_bw()
+```
+
+
+
+
+# ---- Junk/ In Progress - dont need any of this stuff, 
+# but good to show we have no clue what's actually going on ----
+```{r}
+#Code from internet to remove year from date
+banding_data$monthday <- format(as.POSIXct(banding_data$date), "%m/%d")
+mutate(yday = yday(date)) 
+mutate(yday(date)) %>%
+mutate(month = month(banding_data$month, label = TRUE, abbr = TRUE)) %>%
+format(strptime(banding_data$jday, format = "%j"), format= "%m-%d")
+
+
+mutate(given_data, format(banding_data$date, format="%m-%d")) 
+mutate(date = make_date(year,month, day))
+as.Date(banding_data$jday, format= "%j", origin= "1999-07-08")
+
+# Try and make a new column that has all the same year, then reformat dates, then use the above code
+
+# playing with the yday
+as.Date(215, origin = "1999-01-01")
+as.Date(304, origin = "1999-12-26")
+
+    #---- Add a new column to remove the effect of year on plotting ("Monoyear") ------------------
+# makes a column with the year 2000
+monoyear <- rep("2000",times = 295)
+banding_data <- cbind(monoyear, banding_data)
+
+banding_data <- banding_data %>%
+  mutate(monodate = make_date(monoyear,month, day)) %>%
+  mutate(monoyday = (yday(date))) %>%
+  filter(recap== "R")
+# so this produces a new column with te exactly same values as yday... great...
+# yday = monoyday
+# woohoo
+
+#---- The Graphing Code We Want (Finally!) -------------------------------------------------------------------
+ggplot(data = banding_data,mapping = aes(x = as.Date(banding_data$monoyday, origin = "2000-01-01"), y = mass, colour = band), show.legend = FALSE) +
+xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
+  geom_point(group= banding_data$band, show.legend = FALSE) +
+  geom_line(group= banding_data$band, show.legend = FALSE) +
+  facet_wrap(~location) +
+  scale_x_date(labels = date_format("%b")) +
+  #scale_x_date( date_breaks ="1 month", date_labels = "%B")+
+  #scale_x_date(labels = date_format("%m"), breaks = date_breaks("1 month"))+
+  #scale_x_date(labels = date_format("%m"), date_breaks='1 month') +
+  theme_bw()
+
+#it works (why it didn't with the original yday, I have no clue)
+```
 
 
 
