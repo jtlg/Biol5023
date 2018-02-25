@@ -195,8 +195,10 @@ ggplot(data = jointest,mapping = aes(x = monodate, y = sass, colour = band), sho
   #scale_x_date( date_breaks ="1 month", date_labels = "%B")+
   #scale_x_date(labels = date_format("%m"), breaks = date_breaks("1 month"))+
   #scale_x_date(labels = date_format("%m"), date_breaks='1 month') +
-  theme_bw()
-
+  
+  
+  
+# ---- ANYTHING BEYOND THIS IS JUNK ------------------------------
 str(banding_data)
 
 
@@ -256,10 +258,9 @@ colnames(topn)[2] <- "firstmass"
 joined_df <- left_join(group_by_location, topn, by = "band")
 
 #Calculating differences in mass
-#brezhnev <- ungroup(brezhnev)
-#brezhnev <- group_by(brezhnev, band) %>%
- # mutate(sass = mass-firstmass) %>%
-  #mutate(yday = (yday(date.x)))
+joined_df <- ungroup(joined_df)
+joined_df <- group_by(joined_df, band) %>%
+  mutate(sass = mass-firstmass) 
 
 #---- The Graphing Code We Want (Finally!) -------------------------------------------------------------------
 ggplot(data = banding_data,mapping = aes(x = as.Date(joined_df$monoyday.x, origin = "2000-01-01"), y = mass, colour = band), show.legend = FALSE) +
