@@ -77,7 +77,7 @@ ggplot(data = brezhnev,mapping = aes(x = yday, y = sass, colour = band), show.le
   geom_line(show.legend = FALSE) +
   theme_bw()
 
-
+#why russian?
 str(brezhnev)
 
     #---- FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT BON PORTAGE----------------------------
@@ -201,11 +201,37 @@ banding_data <- banding_data %>%
 # yday = monoyday
 # woohoo
 
+#---- Finding differences in mass without separating data into separate dataframes ----
+
+# FIND THOSE BIRDS WITH BAND NUMBER RECORDED MORE THAN ONCE
+recaptured_birds <-  given_data %>% group_by(band, location) %>% filter(n()>1) 
+  # all the ones recaptured DO have an R in the recapture column
+
+# group data by location, band number, and year
+group_by_location <- group_by(banding_data, location, band, year)
+
+#SELECTING BIRDS GROUPED BY BAND OF THE EARLIER DATE OF CAPTURE
+topn <- top_n(x = group_by_location, n = -1, wt = date)
+group_by_location <- ungroup(group_by_location)
+topn <- ungroup(topn)
+
+# RENAMING NEW WEIGHTS COLUMN "mass" TO "firstmass"
+colnames(topn)[2] <- "firstmass"
+
+#JOINING THE TABLES TOGETEHER, WHILE DUPLICATING "firstmass"
+joined_df <- left_join(group_by_location, topn, by = "band")
+
+#Calculating differences in mass
+brezhnev <- ungroup(brezhnev)
+brezhnev <- group_by(brezhnev, band) %>%
+  mutate(sass = mass-firstmass) %>%
+  mutate(yday = (yday(date.x)))
+
 #---- The Graphing Code We Want (Finally!) -------------------------------------------------------------------
-ggplot(data = banding_data,mapping = aes(x = as.Date(banding_data$monoyday, origin = "2000-01-01"), y = mass, colour = band), show.legend = FALSE) +
+ggplot(data = banding_data,mapping = aes(x = as.Date(joined_df$monoyday.x, origin = "2000-01-01"), y = mass, colour = band), show.legend = FALSE) +
 xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
-  geom_point(group= banding_data$band, show.legend = FALSE) +
-  geom_line(group= banding_data$band, show.legend = FALSE) +
+  geom_point(group= joined_df$band, show.legend = FALSE) +
+  geom_line(group= joined_df$band, show.legend = FALSE) +
   facet_wrap(~location) +
   scale_x_date(labels = date_format("%b")) +
   #scale_x_date( date_breaks ="1 month", date_labels = "%B")+
@@ -214,4 +240,12 @@ xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
   theme_bw()
 
 #it works (why it didn't with the original yday, I have no clue)
+
+
+
+
+
+
+
+
 
