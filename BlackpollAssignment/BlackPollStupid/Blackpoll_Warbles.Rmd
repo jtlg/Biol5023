@@ -1,0 +1,149 @@
+---
+title: "Blackpoll_Warbles"
+author: "Joel"
+date: "2/25/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(tidyverse)
+```
+
+#LOAD IN NECESSARY PACKAGES
+```{r, echo=TRUE}
+library(tidyverse)
+library(lubridate)
+library(reshape2)
+```
+
+#VISUALIZE THE DATA FRAME
+```{r}
+str(blpw.all$band)
+blpw.all$band <- factor(blpw.all$band)
+table(blpw.all$band)
+```  
+
+# FIND THOSE BIRDS WITH BAND NUMBER RECORDED MORE THAN ONCE
+```{r}
+# this identifies the number of duplcated band numbers
+recaptured <- anyDuplicated(blpw.all$band, fromLast = TRUE)
+# this subsets thoes duplications
+recap <-  blpw.all %>% group_by(band, location) %>% filter(n()>1) 
+      # all the ones recaptured DO have an R in the recapture column
+```  
+
+# SEPARATE THE DATA ACCORDING TO THE TWO LOCATIONS
+```{r}
+
+table(recap$location) # good there are only two locations
+recap <- ungroup(recap)
+    # select thoes on Seal Island
+seal <- filter(recap, location == "ABO-SI")
+# select thoes on BP Island
+bp <- filter(recap, location == "ABO-BP")
+# so there are only 38 observations
+# there was 40 observations when filtering by recapture column
+```
+
+
+#---- FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT SEAL ISLAND --------------------
+```{r}
+seal <- select (seal, location, band, mass, year, month, day)
+
+# creates a date column so we can organize the captures by date
+seal$date <- with(seal, ymd(sprintf('%04d%02d%02d', year, month, day)))
+```
+# now that we seperated Seal from BP, there will be a few single-bird observations,
+# indecisive bird removal:
+```{r}
+sealrecaptured <- anyDuplicated(dogfood$band, fromLast = TRUE)
+sealrecap <-  seal %>% group_by(band, year) %>% filter(n()>1) 
+```
+
+#GROUP BY BAND NUMBER SO WE CAN FIND DIFFERENCE IN MASS UPON RECAPTURE
+```{r}
+dogfood <- group_by(sealrecap, band, year)
+```
+
+#SELECTING BIRDS GROUPED BY BAND OF THE EARLIER DATE OF CAPTURE
+```{r}
+topn <- top_n(x = dogfood, n = -1, wt = date)
+dogfood <- ungroup(dogfood)
+topn <- ungroup(topn)
+```
+# RENAMING NEW WEIGHTS COLUMN "mass" TO "firstmass"
+```{r}
+colnames(topn)[3] <- "firstmass"
+```
+#JOINING THE TABLES TOGETEHER, WHILE DUPLICATING "firstmass"
+```{r}
+brezhnev <- left_join(dogfood, topn, by = "band") # proposed changing brezhnev to antifreeze
+```
+# MUTATING A NEW COLUMN OF BIRDS WITH SASS (MASS-INITIAL = SASS)
+```{r}
+brezhnev <- ungroup(brezhnev)
+brezhnev <- group_by(brezhnev, band) %>%
+  mutate(sass = mass-firstmass) %>%
+  mutate(yday = (yday(date.x))) # dont need this whole yday thing here
+```
+
+# Try graphing this and see what kind of magic happens
+```{r}
+ggplot(data = brezhnev,mapping = aes(x = yday, y = sass, colour = band), show.legend = FALSE) +
+  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
+  geom_point(show.legend = FALSE) +
+  geom_line(show.legend = FALSE) +
+  theme_bw()
+```
+
+
+#---- FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT BON PORTAGE--------------------
+```{r}
+bp <- select (bp, location, band, mass, year, month, day)
+bp$date <- with(bp, ymd(sprintf('%04d%02d%02d', year, month, day))) 
+
+# Manage them indecisive birds:
+bprecaptured <- anyDuplicated(grumpy_old_man$band, fromLast = TRUE)
+bprecap <-  bp %>% group_by(band, year) %>% filter(n()>1)
+```
+
+#GROUP BY BAND NUMBER SO WE CAN FIND DIFFERENCE IN MASS UPON RECAPTURE
+```{r}
+grumpy_old_man <- group_by(bprecap, band, year) #%>%
+#arrange(desc(date))
+# dont need the arrange really
+
+# topline group - (finding initial mass)
+tops <- top_n(x = grumpy_old_man, n = -1, wt = date)
+grumpy_old_man <- ungroup(grumpy_old_man)
+tops <- ungroup(tops)
+
+# renamed column "mass" to "firstmass"
+colnames(tops)[3] <- "firstmass"
+
+# joining for the mutate calculation
+Bertha <- left_join(grumpy_old_man, tops, by = "band")
+
+# calculating sassy-ness
+Bertha <- ungroup(Bertha)
+Bertha <- group_by(Bertha, band) %>%
+  mutate(sass = mass-firstmass) %>%
+  mutate(yday = (yday(date.x)))
+```
+
+#---- Try graphing this and see what kind of magic happens-------------------------
+```{r}
+ggplot(data = Bertha,mapping = aes(x = yday, y = sass, colour = band), show.legend = FALSE) +
+  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
+  geom_point(show.legend = FALSE) +
+  geom_line(show.legend = FALSE) +
+  theme_bw()
+# magical...
+```
+
+
+
+
+
+
