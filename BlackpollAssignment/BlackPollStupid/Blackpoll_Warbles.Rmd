@@ -1,15 +1,15 @@
 ---
-title: "Blackpoll_Warbles"
-author: "Joel"
-date: "2/25/2018"
+title: "Make the Plot Assignment"
+author: "Joel Goodwin & Mike Light"
+date: "2/24/2018"
 output: html_document
 ---
+#Load in Data
 ```{r, echo=TRUE}
-getwd()
 setwd("/Users/joelgoodwin/Google Drive/School/Masters/Classes/Biol 5023- Research Methods II/VarroaETG_Percent/Biol5023/BlackpollAssignment")
 
 blpw.all<- readRDS("blpw.all.RDS")
-blpw.all <- blpw.all # (mike just used his imported csv)
+blpw.all <- blpw.all
 ```
 
 ```{r setup, include=FALSE}
@@ -17,175 +17,157 @@ knitr::opts_chunk$set(echo = TRUE)
 require(tidyverse)
 ```
 
-#LOAD IN NECESSARY PACKAGES
+#Load in Necessary Packages
 ```{r, echo=TRUE}
 library(tidyverse)
 library(lubridate)
 library(reshape2)
 library(ggplot2)
 library(dplyr)
-library(scales)
 ```
 
-#VISUALIZE THE DATA FRAME
-```{r}
-str(blpw.all$band)
+#Begin by Visualizing the Data Frame
+```{r, echo=TRUE}
+str(blpw.all)
 blpw.all$band <- factor(blpw.all$band)
-table(blpw.all$band)
 ```  
 
-# FIND THOSE BIRDS WITH BAND NUMBER RECORDED MORE THAN ONCE
-```{r}
+#Begin by Selecting Those Birds Whose Band Number Was Recorded More Than Once
+```{r, echo=TRUE}
 # this identifies the number of duplcated band numbers
 recaptured <- anyDuplicated(blpw.all$band, fromLast = TRUE)
-# this subsets thoes duplications
-recap <-  blpw.all %>% group_by(band, location) %>% filter(n()>1) 
-      # all the ones recaptured DO have an R in the recapture column
+# this subsets duplications
+recap <-  blpw.all %>% group_by(band, location) %>% filter(n()>1)
+# all the recaptured birds DO have an R in the recapture column
 ```  
 
-# SEPARATE THE DATA ACCORDING TO THE TWO LOCATIONS
-```{r}
-
-table(recap$location) # good there are only two locations
-recap <- ungroup(recap)
-    # select thoes on Seal Island
-seal <- filter(recap, location == "ABO-SI")
-# select thoes on BP Island
-bp <- filter(recap, location == "ABO-BP")
-# so there are only 38 observations
-# there was 40 observations when filtering by recapture column
+#Separate the Data According to Location For Ease of Analysis
+We want to group the data by location and separate this into two separate data frames to ease our analysis. One data frame for Bon Portage and one for Seal Island.
+```{r, echo=TRUE}
+table(recap$location) 
 ```
 
+#Find the difference in Weight Upon Recapture at Seal Island 
+###Select those birds on Seal Island
+```{r, echo=TRUE}
+seal <- filter(recap, location == "ABO-SI")
+```
 
-#---- FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT SEAL ISLAND --------------------
-```{r}
+```{r, echo=TRUE}
 seal <- select (seal, location, band, mass, year, month, day)
 
-# creates a date column so we can organize the captures by date
+# The following code creates a date column so we can organize the captures by date
 seal$date <- with(seal, ymd(sprintf('%04d%02d%02d', year, month, day)))
 ```
-# now that we seperated Seal from BP, there will be a few single-bird observations,
-# indecisive bird removal:
+
+###Indecisive bird removal
+Now that we have separated Seal Island observations from Bon Portage Island observations, there will be a few single-bird observations. We remove them from analysis.
 ```{r}
-sealrecaptured <- anyDuplicated(dogfood$band, fromLast = TRUE)
-sealrecap <-  seal %>% group_by(band, year) %>% filter(n()>1) 
+sealrecaptured <- anyDuplicated(seal$band, fromLast = TRUE)
+sealrecap <-  seal %>% group_by(band, year) %>% filter(n()>1)
 ```
 
-#GROUP BY BAND NUMBER SO WE CAN FIND DIFFERENCE IN MASS UPON RECAPTURE
+###Group by Band Number so we can Find Difference in Mass Upon Recapture
 ```{r}
-dogfood <- group_by(sealrecap, band, year)
+sealrecap <- group_by(sealrecap, band, year)
 ```
 
-#SELECTING BIRDS GROUPED BY BAND OF THE EARLIER DATE OF CAPTURE
+###Selecting Birds Grouped by Band of the Earlier Date of Capture
 ```{r}
-topn <- top_n(x = dogfood, n = -1, wt = date)
-dogfood <- ungroup(dogfood)
+topn <- top_n(x = sealrecap, n = -1, wt = date)
+sealrecap <- ungroup(sealrecap)
 topn <- ungroup(topn)
 ```
-# RENAMING NEW WEIGHTS COLUMN "mass" TO "firstmass"
+
+###Rename new weights column to "firstmass"
 ```{r}
 colnames(topn)[3] <- "firstmass"
 ```
-#JOINING THE TABLES TOGETEHER, WHILE DUPLICATING "firstmass"
-```{r}
-brezhnev <- left_join(dogfood, topn, by = "band") # proposed changing brezhnev to antifreeze
-```
-# MUTATING A NEW COLUMN OF BIRDS WITH SASS (MASS-INITIAL = SASS)
-```{r}
-brezhnev <- ungroup(brezhnev)
-brezhnev <- group_by(brezhnev, band) %>%
-  mutate(sass = mass-firstmass) %>%
-  mutate(yday = (yday(date.x))) # dont need this whole yday thing here
-```
 
-# Try graphing this and see what kind of magic happens
+###Joining the Tables Together while duplicating "firstmass"
 ```{r}
-ggplot(data = brezhnev,mapping = aes(x = yday, y = sass, colour = band), show.legend = FALSE) +
-  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
-  geom_point(show.legend = FALSE) +
-  geom_line(show.legend = FALSE) +
-  theme_bw()
+joined_table <- left_join(sealrecap, topn, by = "band") 
+```
+###Mutating a New Column of Birds with Difference in Mass (Mass-Initial Mass = SASS)
+```{r}
+joined_table <- ungroup(joined_table)
+joined_table <- group_by(joined_table, band) %>%
+  mutate(sass = mass-firstmass)
 ```
 
+#Find the Difference in Weight Upon Recapture at Bon Portage
+###Select those birds on Bon Portage Island
+```{r}
+bp <- filter(recap, location == "ABO-BP")
+```
 
-#---- FIND THE DIFFERENCE IN WEIGHT UPON RECAPTURE AT BON PORTAGE--------------------
 ```{r}
 bp <- select (bp, location, band, mass, year, month, day)
 bp$date <- with(bp, ymd(sprintf('%04d%02d%02d', year, month, day))) 
 
-# Manage them indecisive birds:
-bprecaptured <- anyDuplicated(grumpy_old_man$band, fromLast = TRUE)
 bprecap <-  bp %>% group_by(band, year) %>% filter(n()>1)
 ```
-
-#GROUP BY BAND NUMBER SO WE CAN FIND DIFFERENCE IN MASS UPON RECAPTURE
+###Indecisive bird removal
+Now that we have separated Bon Portage observations from Seal Island observations, there will be a few single-bird observations. We remove them from analysis.
 ```{r}
-grumpy_old_man <- group_by(bprecap, band, year) #%>%
-#arrange(desc(date))
-# dont need the arrange really
+bprecaptured <- anyDuplicated(bprecap$band, fromLast = TRUE)
+```
 
-# topline group - (finding initial mass)
-tops <- top_n(x = grumpy_old_man, n = -1, wt = date)
-grumpy_old_man <- ungroup(grumpy_old_man)
+###Group by Band Number so we can Find Difference in Mass Upon Recapture
+```{r}
+bprecap<- group_by(bprecap, band, year) 
+```
+###Selecting Birds Grouped by Band of the Earlier Date of Capture
+```{r}
+tops <- top_n(x = bprecap, n = -1, wt = date)
+bprecap <- ungroup(bprecap)
 tops <- ungroup(tops)
-
-# renamed column "mass" to "firstmass"
-colnames(tops)[3] <- "firstmass"
-
-# joining for the mutate calculation
-Bertha <- left_join(grumpy_old_man, tops, by = "band")
-
-# calculating sassy-ness
-Bertha <- ungroup(Bertha)
-Bertha <- group_by(Bertha, band) %>%
-  mutate(sass = mass-firstmass) %>%
-  mutate(yday = (yday(date.x)))
 ```
-
-#---- Try graphing this and see what kind of magic happens-------------------------
+###Rename new weights column from "mass" to "firstmass"
 ```{r}
-ggplot(data = Bertha,mapping = aes(x = yday, y = sass, colour = band), show.legend = FALSE) +
-  xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
-  geom_point(show.legend = FALSE) +
-  geom_line(show.legend = FALSE) +
-  theme_bw()
-# magical...
+colnames(tops)[3] <- "firstmass"
 ```
 
+###Joining the Tables Together While Duplicating "firstmass"
+```{r}
+joined_table_bp <- left_join(bprecap, tops, by = "band")
+```
+###Mutating a New Column of Birds with Difference in Mass (Mass-Initial Mass = SASS)
+```{r}
+joined_table_bp <- ungroup(joined_table_bp)
+joined_table_bp <- group_by(joined_table_bp, band) %>%
+  mutate(sass = mass-firstmass)
+```
 
-# --------------------------- Dealing with Dates-----------------
-
-# ---- Re-joining Islands ----
+#Re-Joining the Data From Both Islands
 ```{r}
 # now to combine BP with SEAL
-ungroup(Bertha, brezhnev)
-jointest <- full_join(Bertha, brezhnev)
-
-#This works, now need to add the location (island) before this # done
+ungroup(joined_table_bp, joined_table)
+jointest <- full_join(joined_table_bp, joined_table)
 jointest <- data.frame(jointest)
-
-# ---- making a month-day column using yday ----
-
-monoyear <- rep("2000",times = 259) # makes a column with the year 2000
-
-jointest <- cbind(monoyear, jointest) # adds monoyear (2000) to jointest
-
-str(jointest) #change year 2000 to numeric
-jointest$monoyear <- as.numeric(as.character(jointest$monoyear)) 
 ```
 
-# making dates consisting of a single year, so graph works
+### Create a month-day column using yday function
+```{r}
+monoyear <- rep("2000",times = 259) 
+# Makes a column with just the year 2000 (arbitrarily selected year)
+
+jointest <- cbind(monoyear, jointest) 
+# Add monoyear (2000) to jointest
+
+# Now we must change year 2000 to numeric
+jointest$monoyear <- as.numeric(as.character(jointest$monoyear))
+```
+
+###Make All Dates from a Single Year to Make the Graph Work
 ```{r}
 jointest <- jointest %>%
-  mutate(monodate = make_date(monoyear,month.x, day.x)) #%>%
-  #mutate(monoyday = (yday(date.x))) %>% # don't need this and also not working, not sure why
-  #filter(recap== "R")
+  mutate(monodate = make_date(monoyear,month.x, day.x))
 
-as.Date(jointest$yday, origin = "2000-01-01")
-# checking that the dates are actually the right months this time, using the old yday
 ```
 
-# ---- Graphing the whole shibam ----
+#The Fruit of Our Labour
+After many dead ends, we've managed to create the graph we've been aiming for.
 ```{r, echo = TRUE}
 ggplot(data = jointest,mapping = aes(x = monodate, y = sass, colour = band), show.legend = FALSE) +
   xlab("Time of Year") + 
@@ -193,65 +175,5 @@ ggplot(data = jointest,mapping = aes(x = monodate, y = sass, colour = band), sho
   geom_point(group= jointest$band, show.legend = FALSE) +
   geom_line(group= jointest$band, show.legend = FALSE) +
   facet_wrap(~location.x) +
-  #scale_x_date(labels = date_format("%m")) +
-  #scale_x_date( date_breaks ="1 month", date_labels = "%B")+
-  #scale_x_date(labels = date_format("%m"), breaks = date_breaks("1 month"))+
-  #scale_x_date(labels = date_format("%m"), date_breaks='1 month') +
-  theme_bw()
+  theme_gray()
 ```
-
-
-
-
-# ---- Junk/ In Progress - dont need any of this stuff, 
-# but good to show we have no clue what's actually going on ----
-```{r}
-#Code from internet to remove year from date
-banding_data$monthday <- format(as.POSIXct(banding_data$date), "%m/%d")
-mutate(yday = yday(date)) 
-mutate(yday(date)) %>%
-mutate(month = month(banding_data$month, label = TRUE, abbr = TRUE)) %>%
-format(strptime(banding_data$jday, format = "%j"), format= "%m-%d")
-
-
-mutate(given_data, format(banding_data$date, format="%m-%d")) 
-mutate(date = make_date(year,month, day))
-as.Date(banding_data$jday, format= "%j", origin= "1999-07-08")
-
-# Try and make a new column that has all the same year, then reformat dates, then use the above code
-
-# playing with the yday
-as.Date(215, origin = "1999-01-01")
-as.Date(304, origin = "1999-12-26")
-
-    #---- Add a new column to remove the effect of year on plotting ("Monoyear") ------------------
-# makes a column with the year 2000
-monoyear <- rep("2000",times = 295)
-banding_data <- cbind(monoyear, banding_data)
-
-banding_data <- banding_data %>%
-  mutate(monodate = make_date(monoyear,month, day)) %>%
-  mutate(monoyday = (yday(date))) %>%
-  filter(recap== "R")
-# so this produces a new column with te exactly same values as yday... great...
-# yday = monoyday
-# woohoo
-
-#---- The Graphing Code We Want (Finally!) -------------------------------------------------------------------
-ggplot(data = banding_data,mapping = aes(x = as.Date(banding_data$monoyday, origin = "2000-01-01"), y = mass, colour = band), show.legend = FALSE) +
-xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
-  geom_point(group= banding_data$band, show.legend = FALSE) +
-  geom_line(group= banding_data$band, show.legend = FALSE) +
-  facet_wrap(~location) +
-  scale_x_date(labels = date_format("%b")) +
-  #scale_x_date( date_breaks ="1 month", date_labels = "%B")+
-  #scale_x_date(labels = date_format("%m"), breaks = date_breaks("1 month"))+
-  #scale_x_date(labels = date_format("%m"), date_breaks='1 month') +
-  theme_bw()
-
-#it works (why it didn't with the original yday, I have no clue)
-```
-
-
-
-

@@ -197,7 +197,7 @@ ggplot(data = jointest,mapping = aes(x = monodate, y = sass, colour = band), sho
   #scale_x_date(labels = date_format("%m"), breaks = date_breaks("1 month"))+
   #scale_x_date(labels = date_format("%m"), date_breaks='1 month') +
   
-  theme
+  
   
 # ---- ANYTHING BEYOND THIS IS JUNK ------------------------------
 str(banding_data)
