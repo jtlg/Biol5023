@@ -172,26 +172,23 @@ str(banding_data)
 
 #Code from internet to remove year from date
 banding_data$monthday <- format(as.POSIXct(banding_data$date), "%m/%d")
-#mutate(yday = yday(date)) 
-#mutate(yday(date)) %>%
-#mutate(month = month(banding_data$month, label = TRUE, abbr = TRUE)) %>%
+mutate(yday = yday(date)) 
+mutate(yday(date)) %>%
+mutate(month = month(banding_data$month, label = TRUE, abbr = TRUE)) %>%
 format(strptime(banding_data$jday, format = "%j"), format= "%m-%d")
 
 
 mutate(given_data, format(banding_data$date, format="%m-%d")) 
-# mutate(date = make_date(year,month, day))
+mutate(date = make_date(year,month, day))
 as.Date(banding_data$jday, format= "%j", origin= "1999-07-08")
 
 # Try and make a new column that has all the same year, then reformat dates, then use the above code
 
-
-
-
-
 # playing with the yday
-#as.Date(215, origin = "1999-01-01")
-#as.Date(304, origin = "1999-12-26")
+as.Date(215, origin = "1999-01-01")
+as.Date(304, origin = "1999-12-26")
 
+    #---- Add a new column to remove the effect of year on plotting ("Monoyear") ------------------
 # makes a column with the year 2000
 monoyear <- rep("2000",times = 295)
 banding_data <- cbind(monoyear, banding_data)
@@ -202,6 +199,19 @@ banding_data <- banding_data %>%
   filter(recap== "R")
 # so this produces a new column with te exactly same values as yday... great...
 # yday = monoyday
-as.Date(banding_data$monoyday, origin = "2000-01-01")
-# woohoo it works (why it didn't with the original yday, I have no clue)
+# woohoo
+
+#---- The Graphing Code We Want (Finally!) -------------------------------------------------------------------
+ggplot(data = banding_data,mapping = aes(x = as.Date(banding_data$monoyday, origin = "2000-01-01"), y = mass, colour = band), show.legend = FALSE) +
+xlab("Time of Year")+ylab("Mass (in grams, relative to capture date)") +
+  geom_point(group= banding_data$band, show.legend = FALSE) +
+  geom_line(group= banding_data$band, show.legend = FALSE) +
+  facet_wrap(~location) +
+  scale_x_date(labels = date_format("%b")) +
+  #scale_x_date( date_breaks ="1 month", date_labels = "%B")+
+  #scale_x_date(labels = date_format("%m"), breaks = date_breaks("1 month"))+
+  #scale_x_date(labels = date_format("%m"), date_breaks='1 month') +
+  theme_bw()
+
+#it works (why it didn't with the original yday, I have no clue)
 
