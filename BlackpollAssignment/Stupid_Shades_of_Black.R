@@ -134,7 +134,6 @@ ggplot(data = Bertha,mapping = aes(x = yday, y = sass, colour = band), show.lege
 # magical...
 
 # Dealing with Dates------------------------------------------------------------------------------------------- ----
-
     #---- Read in Data and Packages -----
 getwd()
 setwd("/Users/joelgoodwin/Google Drive/School/Masters/Classes/Biol 5023- Research Methods II/VarroaETG_Percent/Biol5023/BlackpollAssignment")

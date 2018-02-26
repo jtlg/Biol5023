@@ -127,9 +127,7 @@ $(document).ready(function () {
 
 <div id="load-in-data" class="section level1">
 <h1>Load in Data</h1>
-<pre class="r"><code>setwd(&quot;/Users/joelgoodwin/Google Drive/School/Masters/Classes/Biol 5023- Research Methods II/VarroaETG_Percent/Biol5023/BlackpollAssignment&quot;)
-
-blpw.all&lt;- readRDS(&quot;blpw.all.RDS&quot;)
+<pre class="r"><code>blpw.all&lt;- readRDS(&quot;blpw.all.RDS&quot;)
 blpw.all &lt;- blpw.all</code></pre>
 </div>
 <div id="load-in-necessary-packages" class="section level1">
@@ -164,11 +162,9 @@ library(dplyr)</code></pre>
 ##  $ month   : num  9 9 9 9 9 9 9 9 9 9 ...</code></pre>
 <pre class="r"><code>blpw.all$band &lt;- factor(blpw.all$band)</code></pre>
 </div>
-<div id="begin-by-selecting-those-birds-whose-band-number-was-recorded-more-than-once" class="section level1">
-<h1>Begin by Selecting Those Birds Whose Band Number Was Recorded More Than Once</h1>
-<pre class="r"><code># this identifies the number of duplcated band numbers
-recaptured &lt;- anyDuplicated(blpw.all$band, fromLast = TRUE)
-# this subsets duplications
+<div id="select-those-birds-whose-band-number-was-recorded-more-than-once" class="section level1">
+<h1>Select Those Birds Whose Band Number Was Recorded More Than Once</h1>
+<pre class="r"><code># this subsets duplications
 recap &lt;-  blpw.all %&gt;% group_by(band, location) %&gt;% filter(n()&gt;1)
 # all the recaptured birds DO have an R in the recapture column</code></pre>
 </div>
@@ -283,8 +279,8 @@ ungroup(joined_table_bp, joined_table)</code></pre>
 <pre class="r"><code>jointest &lt;- full_join(joined_table_bp, joined_table)</code></pre>
 <pre><code>## Joining, by = c(&quot;location.x&quot;, &quot;band&quot;, &quot;mass&quot;, &quot;year.x&quot;, &quot;month.x&quot;, &quot;day.x&quot;, &quot;date.x&quot;, &quot;location.y&quot;, &quot;firstmass&quot;, &quot;year.y&quot;, &quot;month.y&quot;, &quot;day.y&quot;, &quot;date.y&quot;, &quot;sass&quot;)</code></pre>
 <pre class="r"><code>jointest &lt;- data.frame(jointest)</code></pre>
-<div id="create-a-month-day-column-using-yday-function" class="section level3">
-<h3>Create a month-day column using yday function</h3>
+<div id="create-a-month-day-column" class="section level3">
+<h3>Create a month-day column</h3>
 <pre class="r"><code>monoyear &lt;- rep(&quot;2000&quot;,times = 259) 
 # Makes a column with just the year 2000 (arbitrarily selected year)
 
