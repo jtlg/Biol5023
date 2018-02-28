@@ -18,7 +18,7 @@ plot(m1)
 
 predictor <- runif(100) - 0.5  ## a uniformly distributed random number between -0.5 and 0.5
 B0 <- 3
-B1 <- 2.3
+B1 <- 3
 error <- rnorm(100, mean = 0, sd = 1)  ## some normally distributed random error
 response <- B0 + B1 * predictor + error
 qplot(predictor, response)
@@ -74,6 +74,33 @@ p + geom_density() + geom_vline(data = est.sum.df, aes(xintercept = mn.est, col 
 
 
 
+# ---- Don't Get It ----
 
 
 
+n.times <- 1000
+est.df <- matrix(nrow = n.times, ncol = 5, NA)
+for (i in 1:n.times) {
+  m1 <- lm(response ~ predictor, data = gen.mod(n = 100, b0 = 1, b1 = 3, sd.err = 1))
+  est.df[i, 1] <- summary(m1)$coefficients["predictor", "Estimate"]
+  m1 <- lm(response ~ predictor, data = gen.mod(n = 100, b0 = 1, b1 = 3, sd.err = 5))
+  est.df[i, 2] <- summary(m1)$coefficients["predictor", "Estimate"]
+  m1 <- lm(response ~ predictor, data = gen.mod(n = 100, b0 = 1, b1 = 3, sd.err = 10))
+  est.df[i, 3] <- summary(m1)$coefficients["predictor", "Estimate"]
+  m1 <- lm(response ~ predictor, data = gen.mod(n = 100, b0 = 1, b1 = 3, sd.err = 15))
+  est.df[i, 4] <- summary(m1)$coefficients["predictor", "Estimate"]
+  m1 <- lm(response ~ predictor, data = gen.mod(n = 100, b0 = 1, b1 = 3, sd.err = 20))
+  est.df[i, 5] <- summary(m1)$coefficients["predictor", "Estimate"]
+}
+est.df <- data.frame(est.df)
+
+## split est.df into a data frame in long format
+est.df <- gather(est.df, value = "est", key="trial")
+est.df$trial <- factor(est.df$trial)
+
+est.sum.df <- group_by(est.df, trial) %>% summarize(mn.est = mean(est))
+
+p <- ggplot(aes(est, group = trial, col = trial), data = est.df)
+p + geom_density() + geom_vline(data = est.sum.df, aes(xintercept = mn.est, col = trial))
+
+# ANGRY 
