@@ -378,13 +378,18 @@ pairs(weather_matrix) # plots all the stuff simultaneiously
 
 
 # ---- Plotting Time-Normalized Data Faceted by Trial ----
+absoluteweather <- read.csv('absoluteweather.csv')
+str(absoluteweather)
+absoluteweather$trial <- as.factor(absoluteweather$trial)
+absoluteweather$conc <- as.factor(absoluteweather$conc)
+
 # Step1: Normalize scores at zero
 subsetted <- mutate(absoluteweather,
                     Zresponse = normalized - 100)
 
 # Step2: Filter out negative responses
 nonegatives <- subsetted %>%
-  mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
+  mutate(Zresponse= ifelse(Zresponse <0, 0, Zresponse)) 
 str(nonegatives$Zresponse)
 
 # Polt that SOAB
@@ -417,16 +422,29 @@ plot(m2)
 
 # remove noisy trials (for time being)
 nonegatives$trial <- as.numeric(nonegatives$trial)
-goodtrials <- nonegatives[nonegatives$trial %in% c(1:7,11, 12), ]
+goodtrials <- nonegatives[nonegatives$trial %in% c(1:8,11, 12), ]
 goodtrials$trial <- as.factor(goodtrials$trial)
 str(goodtrials)
 remove(subsetted)
 
+# Making a Linear model of Zresponse~conc+odour
 library(tidyverse)
 library(modelr)
 options(na.action = na.warn)
 
-ggplot(goodtrials, aes(proportion, Zresponse))+
-  geom_point(aes(colour=trial))
+ggplot(goodtrials, aes(trial, absamp))+
+  geom_point(aes(colour=odour))
+
+mod01 <- lm(Zresponse~conc+odour, data = goodtrials)
+
+grid <- goodtrials %>% 
+  data_grid(odour,conc) %>% 
+  add_predictions(mod01)
+grid
+
+ggplot(goodtrials, aes(x = conc)) + 
+  geom_point(aes(y = Zresponse)) +
+  geom_point(data = grid, aes(y = pred), colour = "red", size = 0.2)+
+  facet_wrap (~odour)
 
 
