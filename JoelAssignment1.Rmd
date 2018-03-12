@@ -2,7 +2,9 @@
 title: "The Basics of Linear Models Assignment"
 author: "Joel Goodwin"
 date: '2018-03-01'
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -26,12 +28,13 @@ generate_dataframe <- function(n = 100, b0 = 2, b1 = 3, sd.err = 1) {
 ```
 
 ```{r, echo= TRUE}
+#Create another dataframe with every combination of every variable
 n.times <- 1:100
 n <- c(10, 50, 100)
 b1 <- c(0.2, 1, 2.7, 4)
 sd.err <- c(0.2, 1.5, 3, 5)
 
-mock_dataframe <- expand.grid(n.times = n.times, n = n, b1 = b1, sd.err = sd.err)
+mock_dataframe <- expand.grid(n.times=n.times, n = n, b1 = b1, sd.err = sd.err)
 ```
 
 ##Question 2.
@@ -61,8 +64,8 @@ second_function <- function(n = 100, b0 = 0, b1 = 0, sd.err = 1) {
     return(data.frame(response = response, predictor = predictor))
 }
 
-n.times <- 1:100
-n <- c(10, 50, 100)
+n.times <- 1:2000
+n <- c(100)
 b1 <- c(0)
 sd.err <- c(0.2, 1.5, 3, 5)
 
@@ -86,13 +89,7 @@ ggplot(data = mock_dataframe2, aes(pval, group = n, col = n)) + geom_density(siz
 #####What proportion of p-values are <= 0.05? 
 
 ```{r, echo= TRUE}
-pvalues <- which(mock_dataframe2$p.val <= 0.05)
-tabulate(pvalues)
-
-sum(tabulate(pvalues))
-
-proportion_greater_or_equal <- (sum(tabulate(pvalues))/120) * 100
-print(proportion_greater_or_equal)
+with(mock_dataframe2, table(pval <= 0.05))/length(mock_dataframe2$pval)
 ```
 
 
@@ -101,6 +98,37 @@ print(proportion_greater_or_equal)
 
 ```{r, echo= TRUE}
 ggplot(data = mock_dataframe2, aes(pval, group = n, col = n)) + geom_density(size=1) + facet_grid(~sd.err) + xlab("p-value") + ylab("Density") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+```
+
+```{r, echo= TRUE}
+group_by(mock_dataframe2, sd.err) %>% 
+  summarise(sum.tab = table(pval <= 0.05)[2]/length(pval))
+```
+
+###Question 4d. 
+#####How does that proportion change when the sample size changes?
+
+```{r, echo=TRUE}
+n.times <- 1:2000  
+n <- c(10, 100, 1000)
+b1 <- c(0)
+sd.err <- c(0.2, 1.5, 3, 5)  
+
+mock_dataframe3 <- expand.grid(n.times = n.times, n = n, b1 = b1, sd.err = sd.err)
+
+for (i in 1:length(mock_dataframe3$n.times)) {
+    temporary_dataframe <- generate_dataframe(n = mock_dataframe3$n[i], b0 = 0, b1 = mock_dataframe3$b1[i], sd.err = mock_dataframe3$sd.err[i])
+    temporary_linear_model <- lm(response ~ predictor, data = temporary_dataframe)
+   mock_dataframe3$pval[i] <- summary(temporary_linear_model)$coefficients["predictor", "Pr(>|t|)"]}
+
+mock_dataframe3$n <- factor(mock_dataframe3$n)
+mock_dataframe3$b1 <- factor(mock_dataframe3$b1)
+mock_dataframe3$sd.err <- factor(mock_dataframe3$sd.err)
+```
+
+```{r, echo=TRUE}
+group_by(mock_dataframe3, sd.err, n) %>% 
+  summarise("p<0.05" = table(pval <= 0.05)[2]/length(pval))
 ```
 
 ##Question 5.
