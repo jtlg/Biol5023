@@ -1,0 +1,217 @@
+GLMs and simulation, continued
+========================================================
+
+Three things. 
+1. Extending to a model matrix format
+2. Poisson processes
+3. Binomial processes
+
+Model matrix
+------------
+
+The underlying code for glm takes your 'model' statement (response ~ predictor) and turns it in to a 'model matrix'. That is the underlying matrix that is used to help estimate the parameters for the model.
+
+In the simplest continuous predictor value case, the model matrix is just the predictors, plus a set of '1s' for the intercept. 
+
+
+```{r}
+pred <- runif(5)
+mm <- model.matrix(~pred)
+print(mm)
+```
+
+For every model you need some parameters, and implied in the above is that we have a B0 (the intercept) and a B1 (the parameter for 'pred'). So, we can set up a vector of parameters, that describe the relationship between the response and the predictor. 
+
+
+```{r}
+B0 <- 10
+B1 <- 2
+params <- c(B0, B1)
+print(params)
+```
+
+Now, to get the estimated response, we simply multiply the model matrix by the parameters. 
+
+```{r}
+resp <- mm %*% params # %*% interaction?
+print(resp)
+```
+
+Note that this results in a vector of the response that is identical to what you'd get if you multiplied them through yourselves. 
+
+
+```{r}
+resp2 <- B0 + B1 * pred
+cbind(resp, resp2)
+```
+
+If you have a factor instead of a continuous variable, then the model matrix will look different. The function _contrasts_ the levels of the factor against one another or the mean. The default contrasts in 'R' are usually 'treatment contrasts' which contrasts each level of a factor with the 'base' level (by default the first level, but you can specify the base). For example ...
+
+
+```{r}
+a.fac <- factor(rep(c("low", "high"), 2))
+mm <- model.matrix(~a.fac)
+print(mm)
+```
+
+a.fac contrasts the levels of a.fac with the base level 'low' (that is why it shows up as a.faclow on the output). If the actual value of the predictor is low, then the expected value is equal to the intercept. If the expected value is 1, then it is equal to the intercept _plus_ the parameter associated with the factor. 
+
+Understanding that simple model matrix will help with your understanding of more complex ones. To get an idea of what it means, let's set a parameters for a.fac, multiply it through, and see what happens. To do this, we need to make up some values that we might expect for 'low' and 'high'. Let's say they are 5 and 10 (on average).
+
+Given that, it is simple to see that if the level of the factor is 'low', the response will be 5. That means the intercept should be 5. If the level of the factor is 'high', then it will be the intercept _plus_ the difference between low and high. 5 again. Let's try that, using both the model matrix, and the parameters. 
+
+
+```{r}
+B0 <- 5
+B1 <- 5
+params <- c(B0, B1)
+resp1 <- mm %*% params
+resp2 <- B0 + B1 * (as.numeric(a.fac) - 1)
+cbind(resp1, resp2)
+```
+
+
+Note that we 'recode' the factor a.fac, in the same way as with the model matrix, but the former is somewhat more 'elegant'. 
+
+From there, we can just add normally distributed random noise, as we did in last week's assignment.
+
+Now, we can start looking at some other types of distributions. To simulate data from a poisson distribution, we need to think about how to get 'poisson error' into the mix. There is a function, 'rpois' that is used to do this. 
+
+Poisson distributions are defined by a single parameter -- the poisson mean. There is no variance, because by definition, the mean is equal to the variance in a poisson distribution. So, what we really need are the poisson means for some set of levels of a factor that we are interested in. 
+
+Here is an example from Kery (page 119). 
+
+
+```{r}
+require(ggplot2)
+ngroups <- 5  ## number of populations
+nsample <- 10  ## number of snakes in each that were sampled
+pop.means <- c(50, 40, 45, 55, 60)  ## mean snout-vent length
+resid.sd <- 3
+
+n <- ngroups * nsample  ## total number of data points
+eps <- rnorm(n, 0, resid.sd)  ## residuals
+x <- rep(1:5, rep(nsample, ngroups))  ## indicator for the population
+means <- rep(pop.means, rep(nsample, ngroups))
+
+X <- as.matrix(model.matrix(~as.factor(x) - 1))  ## design matrix; no intercept!
+
+y <- as.numeric(X %*% as.matrix(pop.means) + eps)
+
+snakes.df <- data.frame(population = as.factor(x), svl = y)
+
+p <- ggplot(data = snakes.df, aes(population, svl))
+p + geom_boxplot()
+```
+... and a simple model
+
+```{r}
+m1 <- glm(svl ~ -1 + population, data=snakes.df)
+summary(m1)
+```
+
+Now on to the poisson process (example from Kery )
+page 193.
+
+Here is toy example. The idea is that we are measuring ectoparasite loads on dragonflies at three different locations. We are interested in whether the parasite load differs by location, by size, and whether there in an interaction. 
+
+So the response that we want to generate is from a poisson distribution. 
+
+```{r}
+
+n.groups <- 3
+n.sample <- 100
+n <- n.groups * n.sample
+
+x <- rep(1:n.groups, rep(n.sample, n.groups)) ## population indicator
+pop <- factor(x, labels = c("Pyrenees", "Massif Central", "Jura"))
+
+length <- runif(n, 4.5, 7.0) ## wing length
+length <- length - mean(length)
+
+```
+
+Design matrix -- an interaction between length and population
+
+```{r}
+Xmat <- model.matrix(~pop * length)
+beta.vec <- c(-2, 1, 2, 5, -2, -7)
+#             B0, B1, B2, B3, B4
+``` 
+# wing length is continuous, -1
+# Population = 2 (df = n-1)
+# miite 1 ~ wing length + population + wing length:population
+#           2(why?)     +     2     +     2   I don't understand this thing and where you got the numbers above (in beta.vec)
+
+And assemble into a poisson model
+```{r}
+
+lin.pred <- Xmat[,] %*% beta.vec
+lambda <- exp(lin.pred) ## poisson mean lambda
+C <- rpois(n = n, lambda = lambda) #random num gen for poisson
+
+```
+Now assess the model.
+```{r}
+m1 <- glm(C ~ pop * length, poisson)
+summary(m1)
+```
+```{r}
+par(mfrow=c(2, 2))
+plot(m1)
+```
+
+Now fit it incorrectly
+```{r}
+m2 <- glm(C ~ pop*length)
+summary(m2)
+```
+```{r}
+plot(m2)
+```
+And now binomial - page 222 in Kery.
+
+We deviate a bit from his example. 
+
+Use the same groups, samples and so on. 
+
+The response here is the proportion of a sample of snakes in each region that are black (there are two colour phases of the snake) and whether that relates to site wetness.
+
+We use 
+
+
+```{r}
+
+n.groups <- 3
+n.sample <- 100
+n <- n.groups * n.sample
+
+x <- rep(1:n.groups, rep(n.sample, n.groups)) ## population indicator
+pop <- factor(x, labels = c("Pyrenees", "Massif Central", "Jura"))
+
+wetness <- runif(n, 0, 1)
+
+```
+```{r}
+N <- round(runif(n, 10, 50)) ## discrete uniform (not necessary) values for N
+Xmat <- model.matrix(~pop * wetness)
+beta.vec <- c(-4, 1, 2, 6, 2, -5)
+```
+```{r}
+lin.pred <- Xmat[,] %*% beta.vec
+exp.p <- exp(lin.pred) / (1 + exp(lin.pred))
+C <- rbinom(n = n, size = N, prob = exp.p)
+```
+And analyze
+```{r}
+m1 <- glm(cbind(C, N-C) ~ pop*wetness, binomial)
+summary(m1)
+```
+
+And the wrong way ...
+```{r}
+
+m2 <- glm(C ~ pop * wetness, poisson)
+plot(m2)
+```
+

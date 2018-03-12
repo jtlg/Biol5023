@@ -7,6 +7,9 @@ library(dplyr)
 
 data<- read.csv('DataForR.csv')
 read.csv("DataForR.csv") 
+absoluteweather <- read.csv("absoluteweather.csv")
+View(absoluteweather) 
+
 
 # ---- Look At Data ----
 str(data)
@@ -352,7 +355,7 @@ ggplot(data = absoluteweather, mapping = aes(min, absamp)) +
 ggplot(data = absoluteweather, mapping = aes(absamp))+
   geom_histogram(bins = 50)
 
-# correlations
+# ---- correlations ----
 cor(absoluteweather$absamp, absoluteweather$temp)
 cov(absoluteweather$absamp, absoluteweather$temp)
 # correlational test to temperature
@@ -384,8 +387,10 @@ subsetted <- mutate(absoluteweather,
 
 # Step2: Filter out negative responses
 nonegatives <- subsetted %>%
-  mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
-str(nonegatives$Zresponse)
+  mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse))  %>%
+  mutate(proportion= ifelse(proportion <0, NA, proportion)) 
+str(nonegatives)
+
 
 # Polt that SOAB
 ggplot(data = nonegatives, aes(min, absamp))+
@@ -397,3 +402,34 @@ ggplot(data = nonegatives, aes(min, absamp))+
 # plot of the normalized data
 ggplot(data = nonegatives, mapping = aes(Zresponse))+
   geom_histogram(bins = 50)
+
+
+# ---- messing around with models ----
+# garbage - ignore
+require(ggplot2)
+m2 <- glm(nonegatives$Zresponse ~ nonegatives$odour*nonegatives$conc + nonegatives$trial, poisson)
+warnings()
+plot(m2)
+
+
+#porportion test probably garbage too
+y <- cbind(absoluteweather$absamp, absoluteweather$linearhex)
+y
+m2 <- glm(y ~ absoluteweather$odour, family = binomial)
+summary(m2)
+plot(m2)
+
+# remove noisy trials (for time being)
+nonegatives$trial <- as.numeric(nonegatives$trial)
+goodtrials <- nonegatives[nonegatives$trial %in% c(1:7,11, 12), ]
+goodtrials$trial <- as.factor(goodtrials$trial)
+str(goodtrials)
+remove(subsetted)
+
+library(tidyverse)
+library(modelr)
+options(na.action = na.warn)
+
+ggplot(goodtrials, aes(proportion, Zresponse))+
+  geom_point(aes(colour=trial))
+
