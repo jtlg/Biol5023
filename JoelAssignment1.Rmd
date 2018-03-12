@@ -8,23 +8,101 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+##Load Packages
+```{r, echo= TRUE}
+require(ggplot2)
+require(tidyverse)
 ```
 
-## Including Plots
+##Question 1.
+#####Develop a function that will generate, for a range of each of ‘*magnitude of B1*’, ‘*sample size*’ and ‘*error*', a measure of the quality of the parameter estimate.    
+**Hint**:  measure of quality is the t-value – the estimate scaled by the standard error of the estimate.   
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r, echo= TRUE}
+generate_dataframe <- function(n = 100, b0 = 2, b1 = 3, sd.err = 1) {
+    predictor <- runif(n) - 0.5
+    response <- b0 + b1 * predictor + rnorm(n, mean = 0, sd = sd.err)
+    return(data.frame(response = response, predictor = predictor))}
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r, echo= TRUE}
+n.times <- 1:100
+n <- c(10, 50, 100)
+b1 <- c(0.2, 1, 2.7, 4)
+sd.err <- c(0.2, 1.5, 3, 5)
+
+mock_dataframe <- expand.grid(n.times = n.times, n = n, b1 = b1, sd.err = sd.err)
+```
+
+##Question 2.
+#####Use the function developed in Question 1 to produce a data frame with various combinations of each of the three variables as ‘factors’ and the quality of the estimate as the response.  
+
+```{r, echo=TRUE}
+for (i in 1:length(mock_dataframe$n.times)) {
+    output <- generate_dataframe(n = mock_dataframe$n[i], b0 = 2, b1 = mock_dataframe$b1[i], sd.err = mock_dataframe$sd.err[i])
+    output.lm <- lm(response ~ predictor, data = generate_dataframe(n = mock_dataframe$n[i], b0 = 2, b1 = mock_dataframe$b1[i], sd.err = mock_dataframe$sd.err[i]))
+    mock_dataframe$tval[i] <- summary(output.lm)$coefficients["predictor", "t value"]}
+```
+
+##Question 3.
+#####Show the results from Question 2 visually.
+
+```{r, echo=TRUE}
+ggplot(data = mock_dataframe, aes(tval, group = b1, col = b1)) + geom_density() + xlab("t value") + ylab("Density") + facet_grid(~sd.err) 
+```
+
+##Question 4.
+#####Do the same thing as above, but use a single parameter estimate of B1 = 0 (e.g. no effect). (Set B0 = 0). Use a sample size of 100. Instead of using the ‘t’ value as your ‘quality’ estimate, have the function output the ‘p-value’.  
+
+```{r, echo=TRUE}
+second_function <- function(n = 100, b0 = 0, b1 = 0, sd.err = 1) {
+    predictor <- runif(n) - 0.5
+    response <- b0 + b1 * predictor + rnorm(n, mean = 0, sd = sd.err)
+    return(data.frame(response = response, predictor = predictor))
+}
+
+n.times <- 1:100
+n <- c(10, 50, 100)
+b1 <- c(0)
+sd.err <- c(0.2, 1.5, 3, 5)
+
+mock_dataframe2 <- expand.grid(n.times = n.times, n = n, b1 = b1, sd.err = sd.err)
+
+for (i in 1:length(mock_dataframe2$n.times)) {
+    output2 <- second_function(n = mock_dataframe2$n[i], b0 = 0, b1 = mock_dataframe2$b1[i], sd.err = mock_dataframe2$sd.err[i])
+    output.lm2 <- lm(response ~ predictor, data = output2)
+    mock_dataframe2$pval[i] <- summary(output.lm2)$coefficients["predictor", "Pr(>|t|)"]
+}
+```
+
+###Question 4a. 
+#####For a given sample size and error, what does the distribution of p-values look like?
+
+```{r, echo= TRUE}
+ggplot(data = mock_dataframe2, aes(pval, group = n, col = n)) + geom_density(size=1) + facet_grid(~sd.err) + xlab("p-value") + ylab("Density")+ theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+```
+
+###Question 4b. 
+#####What proportion of p-values are <= 0.05? 
+
+```{r, echo= TRUE}
+pvalues <- which(mock_dataframe2$p.val <= 0.05)
+tabulate(pvalues)
+
+sum(tabulate(pvalues))
+
+proportion_greater_or_equal <- (sum(tabulate(pvalues))/120) * 100
+print(proportion_greater_or_equal)
+```
+
+
+###Question 4c. 
+#####How does that proportion change when the amount of error changes?
+
+```{r, echo= TRUE}
+ggplot(data = mock_dataframe2, aes(pval, group = n, col = n)) + geom_density(size=1) + facet_grid(~sd.err) + xlab("p-value") + ylab("Density") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+```
+
+##Question 5.
+#####Do all of this in a markdown document, and generate for me an html page of the results.
+Done.
