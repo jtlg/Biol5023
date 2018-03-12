@@ -448,3 +448,8 @@ ggplot(goodtrials, aes(x = conc)) +
   facet_wrap (~odour)
 
 
+# did a glm model - not sure if it's any good, but looks better (gave a warning)
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~conc+odour, data = goodtrials, poisson)
+par(mfrow=c(2, 2))
+plot(m1)
+
