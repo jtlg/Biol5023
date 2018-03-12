@@ -397,3 +397,36 @@ ggplot(data = nonegatives, aes(min, absamp))+
 # plot of the normalized data
 ggplot(data = nonegatives, mapping = aes(Zresponse))+
   geom_histogram(bins = 50)
+
+
+
+# ---- messing around with models ----
+# garbage - ignore
+require(ggplot2)
+m2 <- glm(nonegatives$Zresponse ~ nonegatives$odour*nonegatives$conc + nonegatives$trial, poisson)
+warnings()
+plot(m2)
+
+
+#porportion test probably garbage too
+y <- cbind(absoluteweather$absamp, absoluteweather$linearhex)
+y
+m2 <- glm(y ~ absoluteweather$odour, family = binomial)
+summary(m2)
+plot(m2)
+
+# remove noisy trials (for time being)
+nonegatives$trial <- as.numeric(nonegatives$trial)
+goodtrials <- nonegatives[nonegatives$trial %in% c(1:7,11, 12), ]
+goodtrials$trial <- as.factor(goodtrials$trial)
+str(goodtrials)
+remove(subsetted)
+
+library(tidyverse)
+library(modelr)
+options(na.action = na.warn)
+
+ggplot(goodtrials, aes(proportion, Zresponse))+
+  geom_point(aes(colour=trial))
+
+
