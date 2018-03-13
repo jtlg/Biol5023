@@ -1,0 +1,147 @@
+---
+title: "GLM Assignment 2"
+author: "Joel Goodwin"
+date: '2018-03-9'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+###Load Required Packages
+```{r, echo=TRUE}
+require(tidyverse)
+```
+
+###The Model Matrix
+```{r, echo= TRUE}
+#Create Predictor
+predictor <- runif(5, min = 0, max = 1)
+
+#Make a Model Matrix of Predictor values
+model_matrix <- model.matrix(~predictor)
+
+#View the created Model Matrix
+print(model_matrix)
+```
+
+#####Set the Parameters for the Model
+```{r, echo=TRUE}
+B0 <- 10
+B1 <- 2
+parameters <- c(B0, B1)
+print(parameters)
+```
+
+#####Calaulate the Estimated Response Values
+```{r}
+response <- model_matrix %*% parameters
+print(response)
+```
+
+#####Creating a Model Matrix with Factors
+```{r}
+as_factor <- factor(rep(c("low", "high"), 2))
+model_matrix <- model.matrix(~as_factor)
+print(model_matrix)
+```
+
+```{r}
+B0 <- 5
+B1 <- 5
+parameters <- c(B0, B1)
+response1 <- model_matrix %*% parameters
+response2 <- B0 + B1 * (as.numeric(as_factor) - 1)
+cbind(response1, response2)
+```
+
+###The Poisson Model
+In probability theory and statistics, the Poisson distribution is a discrete probability distribution that expresses the probability of a given number of events occurring in a fixed interval of time or space if these events occur with a known constant rate and independently of the time since the last event. The Poisson distribution can also be used for the number of events in other specified intervals such as distance, area or volume. Poisson distributions are especially useful for count data.       
+Poisson distributions are defined by a single parameter, the poisson mean. There is no variance in poisson models because, by definition, the mean is equal to the variance in a poisson distribution. Therefore, what we really need are the poisson means for a set of levels of a factor that we are interested in.      
+
+```{r}
+n.groups <- 3
+n.sample <- 100
+n <- n.groups * n.sample
+
+x <- rep(1:n.groups, rep(n.sample, n.groups)) ## population indicator
+population <- factor(x, labels = c("Pyrenees", "Massif Central", "Jura"))
+
+length <- runif(n, 4.5, 7.0) ## wing length
+length <- length - mean(length)
+
+```
+
+######Create a Matrix for the Interaction between Length and Population
+```{r}
+Xmat <- model.matrix(~population * length)
+beta.vector <- c(-2, 1, 2, 5, -2, -7)
+```
+
+Next use this matrix to create a poisson model
+```{r}
+linear_predictor <- Xmat[,] %*% beta.vector
+lambda <- exp(linear_predictor) 
+# Lambda= poisson mean
+C <- rpois(n = n, lambda = lambda)
+```
+
+Assess the fit of the model
+```{r}
+model1 <- glm(C ~ population * length, poisson)
+summary(model1)
+```
+
+```{r}
+par(mfrow=c(2, 2))
+plot(model1)
+```
+
+######What happens if we fit the model incorrectly?
+By not specifying the distribution as poisson
+```{r}
+model2 <- glm(C ~ population*length)
+summary(model2)
+```
+
+```{r}
+plot(model2)
+```
+
+###The Binomial Model
+The binomial distribution model is an important probability model that is used when there are two possible outcomes, commonly "success" and "failure" (hence "binomial").    
+The response for the below model is the proportion of a sample of snakes in a region that are black (there are two colour phases of the snake) and whether that relates to site wetness.
+```{r}
+n.groups <- 3
+n.sample <- 100
+n <- n.groups * n.sample
+
+x <- rep(1:n.groups, rep(n.sample, n.groups))
+population <- factor(x, labels = c("Pyrenees", "Massif Central", "Jura"))
+
+wetness <- runif(n, 0, 1)
+
+```
+```{r}
+N <- round(runif(n, 10, 50))
+Xmat <- model.matrix(~population * wetness)
+beta.vector <- c(-4, 1, 2, 6, 2, -5)
+```
+```{r}
+linear.pred <- Xmat[,] %*% beta.vector
+exp.p <- exp(linear.pred) / (1 + exp(linear.pred))
+C <- rbinom(n = n, size = N, prob = exp.p)
+```
+
+Analyze the fit of this model 
+```{r}
+model1 <- glm(cbind(C, N-C) ~ population*wetness, binomial)
+summary(model1)
+```
+
+Analyze the fit of a wrongly-fitted model
+```{r}
+model2 <- glm(C ~ population * wetness, poisson)
+#(Incorrectly) specify a poisson distribution
+plot(model2)
+```
