@@ -2,7 +2,12 @@
 title: "Electrotarsogram Responses of *Varroa destructor*, a Primary Pest of Western Honey Bees (*Apis mellifera* L.)"
 author: "Michael Light & Joel Goodwin"
 date: '2018-01-30'
-output: html_document
+output: 
+   html_document:
+    toc: true
+    toc_depth: 4  
+    number_sections: false 
+    theme: flatly  
 ---
 
 ```{r setup, include=FALSE}
@@ -14,7 +19,8 @@ require(tidyverse)
 
 ##Background Information
 Honeybees are very important organisms to the world at large. Honeybees are important pollinators of flowering plants, and thus are essential to the agriculture industry. Despite their vital importance, honeybee populations have been declining for nearly thirty years. One of the main reasons for this decline in honeybee numbers is the Varroa mite (*Varroa destructor*), an external parasite of honeybees. Varroa mites are responsible for causing Varroosis in honeybees, weakening adult bees by feeding on their haemolymph and thereby increasing their susceptibility to other diseases.
-The current protocol in place to help rid honeybee colonies of Varroa mites is through miticides. However, this method of pest control is not sustainable as the use of miticides may further weaken the honeybees or contaminate hive products. More importantly, an increase in resistance to miticides by Varroa mites has been seen. Consequently, it is imperative to develop a new means of controlling these pests to increase honeybee populations in the long term.  
+The current protocol in place to help rid honeybee colonies of Varroa mites is through miticides. However, this method of pest control is not sustainable as the use of miticides may further weaken the honeybees or contaminate hive products. More importantly, an increase in resistance to miticides by Varroa mites has been seen. Consequently, it is imperative to develop a new means of controlling these pests to increase honeybee populations in the long term.          
+![Varroa mites on adult male honey bee (*Apis melifera*) (genetic literacy project.org)](https://geneticliteracyproject.org/wp-content/uploads/2018/01/bee_varroa_mite-1024x683.jpg)
 
 ##Research Objectives
 This research aims to examine various odorants and their effects on both Varroa mites and honeybees to analyze their attractant or repellent properties on the two species. Additionally, the effects of the odorants on honeybee and Varroa mite behaviour, as well as effects on in-hive production, will be examined.  
@@ -24,14 +30,13 @@ The outcome of this research project will be to implement the use of odorants as
 ##Progress
 Over the summer, Mike conducted electrotarsograms (ETGs) on Varroa mites to examine their physiological sensitivity to several previously identified attractive odourants.  
 
-ETGs on Varroa mites were conducted using single odourants previously identified as evoking a response in Varroa mites, and were tested in four different concentrations (10ng, 1ng, 100μg, 10μg). These are typical concentrations used in ETG studies and often encompass concentrations close to what Varroa mites would encounter in their natural environment. Relative to a control stimulus, these reactions can be used to infer the relative importance of each odourant to Varroa mites in the hive environment.  
+ETGs on Varroa mites were conducted using single odourants previously identified as evoking a response in Varroa mites, and were tested in four different concentrations (10ng, 1ng, 100μg, 10μg). These are typical concentrations used in ETG studies and often encompass concentrations close to what Varroa mites would encounter in their natural environment. Relative to a control stimulus, these reactions can be used to infer the relative importance of each odourant to Varroa mites in the hive environment. 
 
 ##Questions
 The questions we want to answer from the dataset are as follows:  
 1. Are there mite trials that are outliers? 
 2. Are there odours which consistantly evoke a response?  
 3. Are there concentration-dependent trends?  
- - do mites become habituated to odours of a given concentration?
 4. Can we quantify and account for between-trial (between-mite) variability?  
 
 #Loading Data and Packages
@@ -40,37 +45,27 @@ The questions we want to answer from the dataset are as follows:
 setwd("/Users/joelgoodwin/Google Drive/School/Masters/Classes/Biol 5023- Research Methods II/VarroaETG_Percent")
 ```
 
-
 ```{r, echo=TRUE}
-
 my.df <- read_csv('DataForR.csv')
-
 ```
 ###Look at Data
 ```{r, echo=TRUE}
-
 str(my.df)
 summary(my.df)
-
 ```
 
 ```{r}
-
 hist(my.df$normalized, 
      xlab="Normalized ETG Response", ylab="Frequency", 
      main="Frequency of Normalized ETG Responses")
-
 p <- ggplot(data=my.df, aes(normalized))
 p + geom_density()
-
 ```  
   
 Doing this produces a histogram of the percent reaction by Varroa mites. This is an easy way to see how the data is distributed. 
 
 ##Changing Trial number and Concentration to Factors
 ```{r}
-
-
 #change integer to factor for trials
 my.df$trial<-factor(my.df$trial)
 
@@ -124,7 +119,8 @@ ggplot(nonegatives)+
   
 From this plot, we can see the overall trend in ETG responses from Varroa mites at each concentration for each compound tested.
 
-##Step5: Taking temperature and humidity into account
+##Step5: Taking temperature and humidity into account     
+We are still waiting on temperature and humidity data, but Mike has been in touch with someone regarding this.
 
 ```{r, echo=TRUE}
 absoluteweather<- read.csv('absoluteweather.csv')
@@ -136,20 +132,20 @@ str(absoluteweather)
 
 ggplot(data = absoluteweather, mapping = aes(humid, absamp)) + 
   geom_jitter(aes(colour = absoluteweather$trial), width = 0.25) +
-  ggtitle("amplitude vs humidity")
+  ggtitle("Amplitude vs Humidity")
 
 ```
 
 ```{r, echo= TRUE}
 ggplot(data = absoluteweather, mapping = aes(temp, absamp)) + 
   geom_jitter(aes(colour = absoluteweather$trial), width = 0.25) +
-  ggtitle("amplitude vs temperature")
+  ggtitle("Amplitude vs Temperature")
 ```
 
 ```{r, echo= TRUE}
 ggplot(data = absoluteweather, mapping = aes(dewp, absamp)) + 
   geom_jitter(aes(colour = absoluteweather$trial), width = 0.25) +
-  ggtitle("amplitude vs dewp")
+  ggtitle("Amplitude vs Dewpoint")
 ```
 
 ```{r}
@@ -181,7 +177,6 @@ corr_amp_dewp<- cor.test(x=absoluteweather$absamp,
 corr_amp_dewp
 ```
 
-
 ```{r}
 library(fifer)
 spearman.plot(absoluteweather$absamp, absoluteweather$temp)
@@ -194,18 +189,26 @@ pairs(weather_matrix) # plots all the stuff simultaneiously
 
 # Plotting absolute amplitude (corrected to Hexane blank) versus time of trial.
 
-Step1: Normalize scores at zero
-```{r, echo = FALSE}
+```{r, echo = TRUE}
+absoluteweather <- read.csv('absoluteweather.csv')
+str(absoluteweather)
+absoluteweather$trial <- as.factor(absoluteweather$trial)
+absoluteweather$conc <- as.factor(absoluteweather$conc)
+```
+####Step1: Normalize scores at zero
+```{r, echo=TRUE}
 subsetted <- mutate(absoluteweather,
                     Zresponse = normalized - 100)
 ```
-Step2: Filter out negative responses
-```{r, echo = FALSE}
+####Step2: Filter out negative responses
+```{r, echo = TRUE}
+#Not sure whether to replace nonsense scores with NA or 0
 nonegatives <- subsetted %>%
   mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
 str(nonegatives$Zresponse)
 ```
 
+####ETG amplitude plots faceted by trial
 ```{r, echo = TRUE}
 ggplot(data = nonegatives, aes(min, absamp))+
   geom_jitter(aes(colour = nonegatives$odour), width = 0.25)+
@@ -214,3 +217,85 @@ ggplot(data = nonegatives, aes(min, absamp))+
   facet_wrap(~trial)
 ```
 
+####Cut out the Noisy Trails
+```{r}
+nonegatives$trial <- as.numeric(nonegatives$trial)
+goodtrials <- nonegatives[nonegatives$trial %in% c(1:8,11, 12), ]
+goodtrials$trial <- as.factor(goodtrials$trial)
+str(goodtrials)
+remove(subsetted)
+```
+
+####Histogram of the normalized data
+```{r, echo=TRUE}
+ggplot(data = nonegatives, mapping = aes(Zresponse))+
+  geom_histogram(bins = 50)
+```
+
+#Messing Around With Models
+##Linear Model of Zresponse ~ concentration+odour
+```{r}
+library(tidyverse)
+library(modelr)
+options(na.action = na.warn)
+```
+
+```{r, echo=TRUE}
+ggplot(goodtrials, aes(trial, absamp))+
+  geom_point(aes(colour=odour))
+```
+
+```{r, echo=TRUE}
+mod01 <- lm(Zresponse~conc+odour, data = goodtrials)
+
+#fits red dots as predictions according to the model
+grid <- goodtrials %>% 
+  data_grid(odour,conc) %>% 
+  add_predictions(mod01)
+grid
+
+#plots our data
+ggplot(goodtrials, aes(x = conc)) + 
+  geom_point(aes(y = Zresponse)) +
+  geom_point(data = grid, aes(y = pred), colour = "red", size = 0.2)+
+  facet_wrap (~odour)
+```
+
+####Assessment of the Linear Model 
+This model doesn't appear to fit the data very well
+
+##Poisson GLM
+```{r}
+#I tells the below function to change Zresponse to an integer 
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~conc+odour, data = goodtrials, poisson)
+par(mfrow=c(2, 2))
+summary(mod01)
+plot(mod01)
+```
+
+####Assessment of the Poisson GLM 
+This model doesn't appear to fit the data well
+
+##Gaussian GLM
+```{r}
+mod02 <- glm(goodtrials$Zresponse~conc+odour, data = goodtrials)
+par(mfrow=c(2, 2))
+summary(mod02)
+plot(mod02)
+```
+
+####Assessment of the Gaussian GLM 
+This model appears to fit the data better than did the poisson model
+
+##Binomial GLM
+```{r}
+bindf <- goodtrials %>%
+  mutate(BinZresponse= ifelse(Zresponse > 0, 1, 0))
+mod03 <- glm(bindf$BinZresponse~conc+odour, data = bindf, binomial)
+par(mfrow=c(2, 2))
+summary(mod03)
+plot(mod03)
+```
+
+####Assessment of the Binomial GLM 
+This model appears to fit the data terribly
