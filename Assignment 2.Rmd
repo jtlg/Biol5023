@@ -56,7 +56,7 @@ cbind(response1, response2)
 ```
 
 ###The Poisson Model
-In probability theory and statistics, the Poisson distribution is a discrete probability distribution that expresses the probability of a given number of events occurring in a fixed interval of time or space if these events occur with a known constant rate and independently of the time since the last event. The Poisson distribution can also be used for the number of events in other specified intervals such as distance, area or volume. Poisson distributions are especially useful for count data.       
+In probability theory and statistics, the Poisson distribution is a discrete probability distribution that expresses the probability of a given number of events occurring in a fixed interval of time or space if these events occur with a known constant rate and independently of the time since the last event. The Poisson distribution can also be used for the number of events in other specified intervals such as distance, area or volume (wikipedia). Poisson distributions are especially useful for count data.       
 Poisson distributions are defined by a single parameter, the poisson mean. There is no variance in poisson models because, by definition, the mean is equal to the variance in a poisson distribution. Therefore, what we really need are the poisson means for a set of levels of a factor that we are interested in.      
 
 ```{r}
