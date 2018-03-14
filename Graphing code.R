@@ -430,6 +430,7 @@ remove(subsetted)
 # Making a Linear model of Zresponse~conc+odour
 library(tidyverse)
 library(modelr)
+library(glmm)
 options(na.action = na.warn)
 
 ggplot(goodtrials, aes(trial, absamp))+
@@ -449,7 +450,51 @@ ggplot(goodtrials, aes(x = conc)) +
 
 
 # did a glm model - not sure if it's any good, but looks better (gave a warning)
+# had to convert Zresponse to integer for poisson
 mod01 <- glm(I(as.integer(goodtrials$Zresponse))~conc+odour, data = goodtrials, poisson)
 par(mfrow=c(2, 2))
-plot(m1)
+plot(mod01)
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~0, data = goodtrials, poisson)
 
+set.seed(123)
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~0+odour+conc,random = list(~0+trial), 
+              varcomps.names = c("trial"), data = goodtrials, 
+              family.glmm = poisson.glmm, m=1)
+summary(mod01)
+# ---- not any more helpful than before ----
+# plot integer
+mod01 <- lm(I(as.integer(goodtrials$Zresponse))~odour,data = goodtrials)
+par(mfrow=c(2, 2))
+plot(mod01)
+# plot non-integer
+mod01 <- lm(Zresponse~0+odour+conc+odour*conc,data = goodtrials)
+par(mfrow=c(2, 2))
+plot(mod01)
+
+# plot glm integer
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~0+odour+conc+odour*conc,data = goodtrials, poisson)
+# plot glm non-integer
+mod01 <- glm(Zresponse~0+odour+conc+odour*conc,data = goodtrials)
+
+
+
+
+# ---- lme4 package ----
+#nlmer(formula, data = NULL, control = nlmerControl(),
+   #   start = NULL, verbose = 0L, nAGQ = 1L, subset, weights, na.action,
+     # offset, contrasts = NULL, devFunOnly = FALSE, ...)
+
+glmm1 <- glmer(I(as.integer(goodtrials$Zresponse)) ~ odour + (1| trial),
+              data = goodtrials, family = poisson)
+
+summary(glmm1)
+plot(glmm1)
+print(glmm1, correlation=TRUE)
+vcov(glmm1)
+isGLMM(glmm1) # about as useful as an ass
+
+# ---- Analysis of Variance ----
+plot(aov_out <- aov(Zresponse~odour*conc*trial, data = goodtrials))
+
+summary(aov_out)
+plo
