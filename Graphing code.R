@@ -388,8 +388,8 @@ subsetted <- mutate(absoluteweather,
                     Zresponse = normalized - 100)
 
 # Step2: Filter out negative responses
-nonegatives <- subsetted %>%
-  mutate(Zresponse= ifelse(Zresponse <0, 0, Zresponse)) 
+nonegatives <- subsetted %>% #0 or NA for nonsense values?
+  mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
 str(nonegatives$Zresponse)
 
 # Polt that SOAB
@@ -403,8 +403,6 @@ ggplot(data = nonegatives, aes(min, absamp))+
 ggplot(data = nonegatives, mapping = aes(Zresponse))+
   geom_histogram(bins = 50)
 
-
-
 # ---- messing around with models ----
 # garbage - ignore
 require(ggplot2)
@@ -413,7 +411,7 @@ warnings()
 plot(m2)
 
 
-#porportion test probably garbage too
+#porportion test (probably garbage too)
 y <- cbind(absoluteweather$absamp, absoluteweather$linearhex)
 y
 m2 <- glm(y ~ absoluteweather$odour, family = binomial)
@@ -449,7 +447,8 @@ ggplot(goodtrials, aes(x = conc)) +
 
 
 # did a glm model - not sure if it's any good, but looks better (gave a warning)
+#I tells formula to change zresponse to an integer 
 mod01 <- glm(I(as.integer(goodtrials$Zresponse))~conc+odour, data = goodtrials, poisson)
 par(mfrow=c(2, 2))
-plot(m1)
+plot(mod01)
 
