@@ -482,7 +482,7 @@ mod01 <- glm(Zresponse~0+odour+conc+odour*conc,data = goodtrials)
 #nlmer(formula, data = NULL, control = nlmerControl(),
    #   start = NULL, verbose = 0L, nAGQ = 1L, subset, weights, na.action,
      # offset, contrasts = NULL, devFunOnly = FALSE, ...)
-
+library(lme4)
 glmm1 <- glmer(I(as.integer(goodtrials$Zresponse)) ~ odour + (1| trial),
               data = goodtrials, family = poisson)
 
@@ -494,12 +494,10 @@ isGLMM(glmm1) # about as useful as an ass
 
 # ---- Analysis of Variance ----
 plot(aov_out <- aov(Zresponse~odour*conc*trial, data = goodtrials))
-=======
+summary(aov_out)
+
 #I tells formula to change zresponse to an integer 
 mod01 <- glm(I(as.integer(goodtrials$Zresponse))~conc+odour, data = goodtrials, poisson)
 par(mfrow=c(2, 2))
 plot(mod01)
->>>>>>> 53de72f26bbe7039bb68fec8bacfc4045e58c02b
 
-summary(aov_out)
-plo
