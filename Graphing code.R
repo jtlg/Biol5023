@@ -486,6 +486,10 @@ library(lme4)
 glmm1 <- glmer(I(as.integer(goodtrials$Zresponse)) ~ odour + (1| trial),
               data = goodtrials, family = poisson)
 
+glmm1 <- glmer(I(as.integer(goodtrials$Zresponse)) ~ conc*odour + (1| trial),
+               data = goodtrials, family = poisson)
+
+
 summary(glmm1)
 plot(glmm1)
 print(glmm1, correlation=TRUE)
