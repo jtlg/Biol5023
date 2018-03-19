@@ -7,9 +7,6 @@ library(dplyr)
 
 data<- read.csv('DataForR.csv')
 read.csv("DataForR.csv") 
-absoluteweather <- read.csv("absoluteweather.csv")
-View(absoluteweather) 
-
 
 # ---- Look At Data ----
 str(data)
@@ -355,7 +352,7 @@ ggplot(data = absoluteweather, mapping = aes(min, absamp)) +
 ggplot(data = absoluteweather, mapping = aes(absamp))+
   geom_histogram(bins = 50)
 
-# ---- correlations ----
+# correlations
 cor(absoluteweather$absamp, absoluteweather$temp)
 cov(absoluteweather$absamp, absoluteweather$temp)
 # correlational test to temperature
@@ -381,16 +378,26 @@ pairs(weather_matrix) # plots all the stuff simultaneiously
 
 
 # ---- Plotting Time-Normalized Data Faceted by Trial ----
+absoluteweather <- read.csv('absoluteweather.csv')
+awedit <- read.csv('aw_edit.csv')
+
+str(absoluteweather)
+str(awedit)
+
+absoluteweather$trial <- as.factor(absoluteweather$trial)
+awedit$trial <- as.factor(awedit$trial)
+
+absoluteweather$conc <- as.factor(absoluteweather$conc)
+awedit$conc <- as.factor(awedit$conc)
+
 # Step1: Normalize scores at zero
 subsetted <- mutate(absoluteweather,
                     Zresponse = normalized - 100)
 
 # Step2: Filter out negative responses
-nonegatives <- subsetted %>%
-  mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse))  %>%
-  mutate(proportion= ifelse(proportion <0, NA, proportion)) 
-str(nonegatives)
-
+nonegatives <- subsetted %>% #0 or NA for nonsense values?
+  mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
+str(nonegatives$Zresponse)
 
 # Polt that SOAB
 ggplot(data = nonegatives, aes(min, absamp))+
@@ -403,6 +410,163 @@ ggplot(data = nonegatives, aes(min, absamp))+
 ggplot(data = nonegatives, mapping = aes(Zresponse))+
   geom_histogram(bins = 50)
 
+# ---- messing around with models ----
+# garbage - ignore
+require(ggplot2)
+m2 <- glm(nonegatives$Zresponse ~ nonegatives$odour*nonegatives$conc + nonegatives$trial, poisson)
+warnings()
+plot(m2)
+
+
+#porportion test (probably garbage too)
+y <- cbind(absoluteweather$absamp, absoluteweather$linearhex)
+y
+m2 <- glm(y ~ absoluteweather$odour, family = binomial)
+summary(m2)
+plot(m2)
+
+# remove noisy trials (for time being)
+nonegatives$trial <- as.numeric(nonegatives$trial)
+goodtrials <- nonegatives[nonegatives$trial %in% c(1:8,11, 12), ]
+goodtrials$trial <- as.factor(goodtrials$trial)
+str(goodtrials)
+remove(subsetted)
+
+# Making a Linear model of Zresponse~conc+odour
+library(tidyverse)
+library(modelr)
+library(glmm)
+options(na.action = na.warn)
+
+ggplot(goodtrials, aes(trial, absamp))+
+  geom_point(aes(colour=odour))
+
+mod01 <- lm(Zresponse~conc+odour, data = goodtrials)
+
+grid <- goodtrials %>% 
+  data_grid(odour,conc) %>% 
+  add_predictions(mod01)
+grid
+
+ggplot(goodtrials, aes(x = conc)) + 
+  geom_point(aes(y = Zresponse)) +
+  geom_point(data = grid, aes(y = pred), colour = "red", size = 0.2)+
+  facet_wrap (~odour)
+
+
+# did a glm model - not sure if it's any good, but looks better (gave a warning)
+# had to convert Zresponse to integer for poisson
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~conc+odour, data = goodtrials, poisson)
+par(mfrow=c(2, 2))
+plot(mod01)
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~0, data = goodtrials, poisson)
+
+set.seed(123)
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~0+odour+conc,random = list(~0+trial), 
+              varcomps.names = c("trial"), data = goodtrials, 
+              family.glmm = poisson.glmm, m=1)
+summary(mod01)
+# ---- not any more helpful than before ----
+# plot integer
+mod01 <- lm(I(as.integer(goodtrials$Zresponse))~odour,data = goodtrials)
+par(mfrow=c(2, 2))
+plot(mod01)
+# plot non-integer
+mod01 <- lm(Zresponse~0+odour+conc+odour*conc,data = goodtrials)
+par(mfrow=c(2, 2))
+plot(mod01)
+
+# plot glm integer
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~0+odour+conc+odour*conc,data = goodtrials, poisson)
+# plot glm non-integer
+mod01 <- glm(Zresponse~0+odour+conc+odour*conc,data = goodtrials)
+
+
+
+
+# ---- lme4 package ----
+#nlmer(formula, data = NULL, control = nlmerControl(),
+   #   start = NULL, verbose = 0L, nAGQ = 1L, subset, weights, na.action,
+     # offset, contrasts = NULL, devFunOnly = FALSE, ...)
+library(lme4)
+glmm1 <- glmer(I(as.integer(goodtrials$Zresponse)) ~ odour + (1| trial),
+              data = goodtrials, family = poisson)
+
+glmm1 <- glmer(I(as.integer(goodtrials$Zresponse)) ~ conc*odour + (1| trial),
+               data = goodtrials, family = poisson)
+
+
+str(goodtrials)
+summary(glmm1)
+plot(glmm1)
+print(glmm1, correlation=TRUE)
+vcov(glmm1)
+isGLMM(glmm1) # about as useful as an ass
+
+# ---- Analysis of Variance ----
+plot(aov_out <- aov(Zresponse~odour*conc*trial, data = goodtrials))
+summary(aov_out)
+
+#I tells formula to change zresponse to an integer 
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~conc+odour, data = goodtrials, poisson)
+par(mfrow=c(2, 2))
+plot(mod01)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ---- Plotting Time-Normalized Data Faceted by Trial ----
+absoluteweather <- read.csv('absoluteweather.csv')
+awedit <- read.csv('aw_edit.csv')
+
+str(absoluteweather)
+str(awedit)
+
+absoluteweather$trial <- as.factor(absoluteweather$trial)
+awedit$trial <- as.factor(awedit$trial)
+
+absoluteweather$conc <- as.factor(absoluteweather$conc)
+awedit$conc <- as.factor(awedit$conc)
+
+# Step1: Normalize scores at zero
+subsetted <- mutate(absoluteweather,
+                    Zresponse = normalized - 100)
+subsetted <- mutate(awedit,
+                    Zresponse = normalized - 100)
+
+# Step2: Filter out negative responses
+nonegatives <- subsetted %>% #0 or NA for nonsense values?
+  mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
+str(nonegatives$Zresponse)
+
+# Polt that SOAB
+ggplot(data = nonegatives, aes(min, absamp))+
+  geom_jitter(aes(colour = nonegatives$odour), width = 0.25)+
+  xlab("Time")+ylab("Absamp")+ggtitle("Faceted ETG Plots")+
+  theme_bw(10)+
+  facet_wrap(~trial)
+
+# plot of the normalized data
+ggplot(data = nonegatives, mapping = aes(Zresponse))+
+  geom_histogram(bins = 50)
 
 # ---- messing around with models ----
 # garbage - ignore
@@ -412,7 +576,7 @@ warnings()
 plot(m2)
 
 
-#porportion test probably garbage too
+#porportion test (probably garbage too)
 y <- cbind(absoluteweather$absamp, absoluteweather$linearhex)
 y
 m2 <- glm(y ~ absoluteweather$odour, family = binomial)
@@ -421,15 +585,196 @@ plot(m2)
 
 # remove noisy trials (for time being)
 nonegatives$trial <- as.numeric(nonegatives$trial)
-goodtrials <- nonegatives[nonegatives$trial %in% c(1:7,11, 12), ]
+goodtrials <- nonegatives[nonegatives$trial %in% c(1:8,11, 12), ]
 goodtrials$trial <- as.factor(goodtrials$trial)
 str(goodtrials)
 remove(subsetted)
 
+# Making a Linear model of Zresponse~conc+odour
 library(tidyverse)
 library(modelr)
+library(glmm)
 options(na.action = na.warn)
 
-ggplot(goodtrials, aes(proportion, Zresponse))+
-  geom_point(aes(colour=trial))
+ggplot(goodtrials, aes(trial, absamp))+
+  geom_point(aes(colour=odour))
+
+mod01 <- lm(Zresponse~conc+odour, data = goodtrials)
+
+grid <- goodtrials %>% 
+  data_grid(odour,conc) %>% 
+  add_predictions(mod01)
+grid
+
+ggplot(goodtrials, aes(x = conc)) + 
+  geom_point(aes(y = Zresponse)) +
+  geom_point(data = grid, aes(y = pred), colour = "red", size = 0.2)+
+  facet_wrap (~odour)
+
+
+# did a glm model - not sure if it's any good, but looks better (gave a warning)
+# had to convert Zresponse to integer for poisson
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~conc+odour, data = goodtrials, poisson)
+par(mfrow=c(2, 2))
+plot(mod01)
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~0, data = goodtrials, poisson)
+
+set.seed(123)
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~0+odour+conc,random = list(~0+trial), 
+             varcomps.names = c("trial"), data = goodtrials, 
+             family.glmm = poisson.glmm, m=1)
+summary(mod01)
+# ---- not any more helpful than before ----
+# plot integer
+mod01 <- lm(I(as.integer(goodtrials$Zresponse))~odour,data = goodtrials)
+par(mfrow=c(2, 2))
+plot(mod01)
+# plot non-integer
+mod01 <- lm(Zresponse~0+odour+conc+odour*conc,data = goodtrials)
+par(mfrow=c(2, 2))
+plot(mod01)
+
+# plot glm integer
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~0+odour+conc+odour*conc,data = goodtrials, poisson)
+# plot glm non-integer
+mod01 <- glm(Zresponse~0+odour+conc+odour*conc,data = goodtrials)
+
+
+
+
+# ---- lme4 package ----
+#nlmer(formula, data = NULL, control = nlmerControl(),
+#   start = NULL, verbose = 0L, nAGQ = 1L, subset, weights, na.action,
+# offset, contrasts = NULL, devFunOnly = FALSE, ...)
+library(lme4)
+glmm1 <- glmer(I(as.integer(goodtrials$Zresponse)) ~ odour + (1| trial),
+               data = goodtrials, family = poisson)
+
+glmm1 <- glmer(I(as.integer(goodtrials$Zresponse)) ~ conc*odour + (1| trial),
+               data = goodtrials, family = poisson)
+
+
+str(goodtrials)
+summary(glmm1)
+plot(glmm1)
+print(glmm1, correlation=TRUE)
+vcov(glmm1)
+isGLMM(glmm1) # about as useful as an ass
+
+# ---- Analysis of Variance ----
+plot(aov_out <- aov(Zresponse~odour*conc*trial, data = goodtrials))
+summary(aov_out)
+
+#I tells formula to change zresponse to an integer 
+mod01 <- glm(I(as.integer(goodtrials$Zresponse))~ conc + odour, data = goodtrials, poisson)
+par(mfrow=c(2, 2))
+plot(mod01)
+
+# ---- Random Break ----
+# (Y|B=b)
+summary(goodtrials)
+plot(goodtrials$trial,goodtrials$Zresponse)
+
+fm01 <- lmer(Zresponse ~ odour + conc + (1|trial), goodtrials, REML = FALSE)
+
+str(Dyestuff)
+(fm01ML <- lmer(Yield ~ 1 + (1|Batch), Dyestuff, REML = FALSE))
+
+
+# parameters estemated are thoes that minimize the RMEL criterion
+# An alternative set of pa- rameter estimates, the maximum likelihood estimates, 
+# are obtained by spec- ifying the optional argument REML=FALSE.
+
+# The display of a model fit by maximum likelihood provides several other model-fit statistics 
+# such as Akaike’s Information Criterion (AIC) ̃[Sakamoto et ̃al., 1986]
+# Schwarz’s Bayesian Information Criterion (BIC) ̃[Schwarz, 1978],
+# the log-likelihood (logLik) at the parameter estimates, 
+# and the deviance (neg- ative twice the log-likelihood) at the parameter estimates. 
+
+# Generally the REML estimates of variance components are preferred to the ML estimates. 
+# However, when comparing models it is safest to refit all the models 
+# using the maximum likelihood criterion
+
+# There are two sources of variability in the model we have fit, 
+#a batch-to-batch variability in the level of the response and 
+# the residual or per-observation variability — also called the within-batch variability.
+
+# residual = cannot be explained or modeled with other terms
+# Some of the variability in the response is associated with the fixed-effects terms.
+# in this model it is labeled as the (Intercept)
+
+# The line labeled Residual in this table gives the estimate of the variance of the residuals 
+# (also in g2) and its corresponding standard deviation
+# In this case we have a single random effects term, (1|Batch), 
+# in the model formula and the grouping factor for that term is Batch.
+# There will be a total of six random e↵ects, one for each level of Batch.
+(fm02 <- lmer(Yield ~ 1 + (1|Batch), Dyestuff2))
+(fm02ML <- update(fm02, REML=FALSE))
+
+
+# The mixed-e↵ects model fit as fm01 or fm01ML has three parameters for which we obtained estimates. 
+# These parameters are s1, the standard deviation of the random effects, 
+# s, the standard deviation of the residual or “per-observation” noise term and 
+# b0, the fixed-effects parameter that is labeled as (Intercept).
+
+# The <profile> function systematically varies the parameters in a model, 
+# assessing the best possible fit that can be obtained with one parameter fixed 
+# at a specific value and comparing this fit to the globally optimal fit, 
+# which is the original model fit that allowed all the parameters to vary.
+
+# The models are compared according to the change in the deviance, 
+# which is the likelihood ratio test (LRT) statistic.
+# We apply a signed square root transformation to this statistic and plot 
+# the resulting function, called zeta, versus the parameter value.
+fm01ML <- lmer(Yield ~ 1|Batch, Dyestuff, REML=FALSE, verbose=1)
+pr01 <- profile(fm01ML)
+library(lattice)
+xyplot(pr01, aspect = 1.3, layout = c(3,1))
+confint(pr01, level = 0.99)
+
+#zeta plot shows us the sensitivity of the model fit to changes 
+# in the value of particular parameters
+
+# Ideally the profile zeta plot will be close to a straight line over the region of interest, 
+# in which case we can perform reliable statistical inference based on the parameter’s 
+# estimate, its standard error and quantiles of the standard normal distribution
+
+# ---- Profile Pairs Plots
+splom(pr01)
+# We will refer to the two traces on a panel as the “horizontal trace” and “vertical trace”
+
+
+# 1.6 Assessing the Random Effects
+ranef(fm01ML)
+# The ranef extractor returns the conditional modes
+str(ranef(fm01ML))
+# In this case the list is of length 1 because there is only one random-effects term,
+#(1|Batch), in the model and, hence, only one grouping factor, Batch, for the random effects
+
+# To make this more explicit, random-effects terms in the model formula are those that contain 
+# the vertical bar ("|") character. 
+
+# The Batch variable is the grouping factor for the random e↵ects generated by this term.
+#An expression for the grouping factor, usually just the name of a variable, 
+# occurs to the right of the vertical bar. 
+
+# The expression on the left is 1, we describe the term as a simple, scalar, random-effects term
+# The designation “scalar” means there will be exactly one random effect generated 
+# for each level of the grouping factor.
+
+
+# Given the data, y, and the parameter estimates, 
+# we can evaluate a measure of the dispersion of (B|Y = y). 
+# In the case of a linear mixed model, this is the conditional standard deviation,
+# from which we can obtain a prediction interval.
+dotplot(ranef(fm01ML, condVar = TRUE))
+qqmath(ranef(fm01ML, condVar=TRUE))
+# where the intervals are plotted versus quantiles of the standard normal.
+
+# ---- Chapter 2 ----
+# Models With Multiple Random-e↵ects Terms
+
+
+
+
 
