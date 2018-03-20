@@ -307,4 +307,8 @@ plot(mod03)
 ```
 
 ####Assessment of the Binomial GLM 
-This model appears to fit the data terribly
+This model appears to fit the data terribly    
+
+
+
+ <a href="#top">Back to top</a>
