@@ -772,9 +772,116 @@ qqmath(ranef(fm01ML, condVar=TRUE))
 # where the intervals are plotted versus quantiles of the standard normal.
 
 # ---- Chapter 2 ----
-# Models With Multiple Random-e↵ects Terms
+# Models With Multiple Random-effects Terms
+
+# 2.1 A Model With Crossed Random Effects
+# where several factors have random effects associated with them 
+# e.g. reaction of each of a group of subjects to each of a group of stimuli or items
+# if subjects considered a sample from a population AND the stimuli are 
+# considered a sample of all possible stimuli, then it would make sense to associate
+# random effects with both of these factors
+
+# example: the Penecillin Data
+library(lme4)
+str(Penicillin)
+summary(Penicillin)
+plot(Penicillin)
+xtabs(~sample+plate, Penicillin)
+xtabs(~odour+conc, goodtrials) # completly crossed 
+# (we have at least one observation for each combination of odour and concentration)
+xtabs(~odour+trial, goodtrials) # not crossed
+xtabs(~conc+trial, goodtrials) # crossed
+
+(fm03ML <- lmer(diameter ~ 1 + (1|plate) + (1|sample), Penicillin, REML = FALSE))
+(fm03 <- lmer(Zresponse ~ 1 + (1|odour) + (1|conc), goodtrials))
+
+fm03@re@theta #no clue does not work
+
+pr03 <- profile(fm03ML)
+xyplot(fm03, aspect = 1.3, layout = c(3,1))
+confint(pr03, level = 0.95)
+splom(pr03)
+
+# 2.2 A Model With Nested Random Effets
+
+# 2.2.1 The Pastes Data
+str(Pastes)
+summary(Pastes)
+xtabs(~ batch + sample, Pastes, drop = TRUE, sparse = TRUE)
+# 2.2.1.1 Nested Factors
+
+# Because each level of sample occurs with one and only one level of batch 
+# we say that sample is nested within batch
+
+# implicitly nested factors
+xtabs(~ cask + batch, Pastes)
+# this code adds an interaction factor ":" of batch and cask (giving rise to sample)
+Pastes$sample <- with(Pastes, factor(batch:cask))
+
+# If you are not sure, the safest thing to do is to create the interaction factor, 
+# as shown above, so you can be confident that levels of the district:school 
+# interaction do indeed correspond to unique schools.
+goodtrials$sample <- with(goodtrials, factor(odour:conc))
+xtabs(~ odour + sample, goodtrials, drop = TRUE, sparse = TRUE)
+
+# 2.2.2 Fitting a Model With Nested Random Effects
+(fm04 <- lmer(strength ~ 1 + (1|sample) + (1|batch), Pastes, REML=FALSE))
+(fm04 <- lmer(Zresponse ~ 1 + (1|sample) + (1|odour), goodtrials, REML=FALSE))
 
 
+# 2.2.4 Testing H0 :s2 =0 Versus Ha :s2 >0
+
+#parsimony is embodied in hypothesis tests comparing two models, 
+# one of which contains the other as a special case
+
+# The restricted model fit
+(fm04a <- lmer(strength ~ 1 + (1|sample), Pastes, REML=FALSE))
+# is compared to model fm04 with the anova function 
+anova(fm04a, fm04)
+
+pr04 <- profile(fm04)
+confint(pr04)
+pr04a <- profile(fm04a)
+confint(pr04a)
+
+# 2.3 A Model With Partially Crossed Random Effects
+
+# 2.3.1 The InstEval Data
+str(InstEval)
+summary(InstEval)
+# At this point we will fit models that have random e↵ects for student, 
+# instructor, and department (or the dept:service combination) to these data.
+
+# In the next chapter we will fit models incorporating fixed-e↵ects 
+# for instructor and department to these data.
+
+(fm05 <- lmer(y ~ 1 + (1|s) + (1|d)+(1|dept:service), InstEval, REML=FALSE))
+fm05a <- lmer(y ~ 1 + (1|s) + (1|d), InstEval, REML=0)
+anova(fm05a,fm05)
+
+# 2.3.2 Structure of L for model fm05
+# Before leaving this model we examine the sparse Cholesky factor, L, 
+# (Fig. ̃2.16), which is of size 4128⇥4128.
+# Even as a sparse matrix this factor requires a considerable amount of memory,
+object.size(fm05@re@L)
+unclass(round(object.size(fm05@re@L)/2^20, 3))  # size in megabytes
 
 
+# GLMM binary response
+# 6.1.2 Initial GLMM fit to the contraception data
+require(mlmRev)
+str(Contraception)
 
+fm10 <- glmer(use ~ 1+age+I(age^2)+urban+livch+(1|district), Contraception, binomial)
+print(fm10, corr=FALSE)
+
+# my data
+goodtrials$integer <- as.integer(goodtrials$Zresponse)
+fm10 <- glmer(gb ~ 1+Zresponse+(1|sample)+(1|trial), goodtrials, binomial)
+
+
+# so number of childern does not matter, only if female has childern or not
+Contraception <- within(Contraception,ch <- factor(livch != 0, labels = c("N", "Y")))
+# so we made a Y/N column for childern in families
+(fm11 <- glmer(use ~ age + I(age^2) + urban + ch + (1 | district), Contraception, binomial))
+anova(fm11,fm10)
