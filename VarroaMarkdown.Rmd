@@ -1,13 +1,13 @@
 ---
 title: "Electrotarsogram Responses of *Varroa destructor*, a Primary Pest of Western Honey Bees (*Apis mellifera* L.)"
 author: "Michael Light & Joel Goodwin"
-date: '2018-01-30'
+date: '2018-03-18'
 output: 
    html_document:
     toc: true
     toc_depth: 4  
     number_sections: false 
-    theme: flatly  
+    theme: readable  
 ---
 
 ```{r setup, include=FALSE}
@@ -34,12 +34,12 @@ ETGs on Varroa mites were conducted using single odourants previously identified
 
 ##Questions
 The questions we want to answer from the dataset are as follows:  
-1. Are there mite trials that are outliers? 
+1. Are there mite trials that are outliers?     
 2. Are there odours which consistantly evoke a response?  
 3. Are there concentration-dependent trends?  
 4. Can we quantify and account for between-trial (between-mite) variability?  
 
-#Loading Data and Packages
+#Loading Data 
 
 ```{r, echo=FALSE}
 setwd("/Users/joelgoodwin/Google Drive/School/Masters/Classes/Biol 5023- Research Methods II/VarroaETG_Percent")
@@ -195,12 +195,12 @@ str(absoluteweather)
 absoluteweather$trial <- as.factor(absoluteweather$trial)
 absoluteweather$conc <- as.factor(absoluteweather$conc)
 ```
-####Step1: Normalize scores at zero
+###Step1: Normalize scores at zero
 ```{r, echo=TRUE}
 subsetted <- mutate(absoluteweather,
                     Zresponse = normalized - 100)
 ```
-####Step2: Filter out negative responses
+###Step2: Filter out negative responses
 ```{r, echo = TRUE}
 #Not sure whether to replace nonsense scores with NA or 0
 nonegatives <- subsetted %>%
@@ -232,8 +232,16 @@ ggplot(data = nonegatives, mapping = aes(Zresponse))+
   geom_histogram(bins = 50)
 ```
 
+#Analysis of Variance (ANOVA)
+```{r}
+plot(aov_out <- aov(Zresponse~odour*conc*trial, data = goodtrials))
+
+summary(aov_out)
+```
+
 #Messing Around With Models
-##Linear Model of Zresponse ~ concentration+odour
+##Linear Model (LM) 
+
 ```{r}
 library(tidyverse)
 library(modelr)
@@ -245,6 +253,7 @@ ggplot(goodtrials, aes(trial, absamp))+
   geom_point(aes(colour=odour))
 ```
 
+Zresponse ~ concentration+odour
 ```{r, echo=TRUE}
 mod01 <- lm(Zresponse~conc+odour, data = goodtrials)
 
@@ -285,7 +294,7 @@ plot(mod02)
 ```
 
 ####Assessment of the Gaussian GLM 
-This model appears to fit the data better than did the poisson model
+This model appears to fit the data better than the poisson model
 
 ##Binomial GLM
 ```{r}
