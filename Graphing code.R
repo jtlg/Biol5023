@@ -392,6 +392,11 @@ nonegatives <- subsetted %>% #0 or NA for nonsense values?
   mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
 str(nonegatives$Zresponse)
 
+# Step3: Remove any additional zeros (Hexane)
+# omit this step if changing NA's to zeros
+nonegatives<-subset(nonegatives, Zresponse != 0)
+
+
 # Polt that SOAB
 ggplot(data = nonegatives, aes(min, absamp))+
   geom_jitter(aes(colour = nonegatives$odour), width = 0.25)+
@@ -400,7 +405,7 @@ ggplot(data = nonegatives, aes(min, absamp))+
   facet_wrap(~trial)
 
 # plot of the normalized data
-ggplot(data = nonegatives, mapping = aes(Zresponse))+
+ggplot(data = nonegatives, mapping = aes(log(Zresponse)))+
   geom_histogram(bins = 50)
 
 # ---- messing around with models ----
@@ -419,9 +424,7 @@ summary(m2)
 plot(m2)
 
 # remove noisy trials (for time being)
-nonegatives$trial <- as.numeric(nonegatives$trial)
 goodtrials <- nonegatives[nonegatives$trial %in% c(1:8,11, 12), ]
-goodtrials$trial <- as.factor(goodtrials$trial)
 str(goodtrials)
 remove(subsetted)
 
@@ -431,8 +434,11 @@ library(modelr)
 library(glmm)
 options(na.action = na.warn)
 
-ggplot(goodtrials, aes(trial, absamp))+
-  geom_point(aes(colour=odour))
+# changed to log of absamp... guess I need to carry this over to the rest of csv data
+logging <- log(goodtrials$absamp)
+ggplot(goodtrials, aes(trial, logging))+
+  #geom_point(aes(colour=odour))+
+  geom_jitter(aes(colour=odour))
 
 mod01 <- lm(Zresponse~conc+odour, data = goodtrials)
 
@@ -448,7 +454,6 @@ ggplot(goodtrials, aes(x = conc)) +
 
 
 # did a glm model - not sure if it's any good, but looks better (gave a warning)
-<<<<<<< HEAD
 # had to convert Zresponse to integer for poisson
 mod01 <- glm(I(as.integer(goodtrials$Zresponse))~conc+odour, data = goodtrials, poisson)
 par(mfrow=c(2, 2))
@@ -473,8 +478,8 @@ plot(mod01)
 # plot glm integer
 mod01 <- glm(I(as.integer(goodtrials$Zresponse))~0+odour+conc+odour*conc,data = goodtrials, poisson)
 # plot glm non-integer
-mod01 <- glm(Zresponse~0+odour+conc+odour*conc,data = goodtrials)
-
+plot(mod01 <- glm((log(Zresponse))~-1+odour+conc+odour*conc,data = goodtrials))
+print(mod01)
 
 
 
@@ -483,10 +488,10 @@ mod01 <- glm(Zresponse~0+odour+conc+odour*conc,data = goodtrials)
    #   start = NULL, verbose = 0L, nAGQ = 1L, subset, weights, na.action,
      # offset, contrasts = NULL, devFunOnly = FALSE, ...)
 library(lme4)
-glmm1 <- glmer(I(as.integer(goodtrials$Zresponse)) ~ odour + (1| trial),
+glmm1 <- glmer(Zresponse ~ odour + (1| trial),
               data = goodtrials, family = poisson)
 
-glmm1 <- glmer(I(as.integer(goodtrials$Zresponse)) ~ conc*odour + (1| trial),
+glmm1 <- glmer(Zresponse ~ conc*odour + (1| trial),
                data = goodtrials, family = poisson)
 
 
@@ -497,7 +502,7 @@ vcov(glmm1)
 isGLMM(glmm1) # about as useful as an ass
 
 # ---- Analysis of Variance ----
-plot(aov_out <- aov(Zresponse~odour*conc*trial, data = goodtrials))
+plot(aov_out <- aov(Zresponse~trial*odour*conc, data = goodtrials))
 summary(aov_out)
 
 #I tells formula to change zresponse to an integer 
