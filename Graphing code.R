@@ -377,27 +377,79 @@ pairs(weather_matrix) # plots all the stuff simultaneiously
 
 
 
+
+
+
+
+
+
 # ---- Plotting Time-Normalized Data Faceted by Trial ----
 absoluteweather <- read.csv('absoluteweather.csv')
 str(absoluteweather)
 absoluteweather$trial <- as.factor(absoluteweather$trial)
 absoluteweather$conc <- as.factor(absoluteweather$conc)
 
-# Step1: Normalize scores at zero
+# ---- Step1: Normalize scores at zero ----
 subsetted <- mutate(absoluteweather,
                     Zresponse = normalized - 100)
 
-# Step2: Filter out negative responses
+# ---- Step2: Filter out negative responses ----
 nonegatives <- subsetted %>% #0 or NA for nonsense values?
   mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
 str(nonegatives$Zresponse)
 
-# Step3: Remove any additional zeros (Hexane)
-# omit this step if changing NA's to zeros
+# ---- Step3: Remove any additional zeros (Hexane) omit this step if changing NA's to zeros ----
 nonegatives<-subset(nonegatives, Zresponse != 0)
 
 
-# Polt that SOAB
+
+# ---- Step4: Remove noisy trials (for time being) ----
+goodtrials <- nonegatives[nonegatives$trial %in% c(1:8,11, 12), ]
+str(goodtrials)
+remove(subsetted)
+# ---- Plotting the good trials & looking to see which odours to omit completely ----
+ggplot(goodtrials)+
+  geom_boxplot(aes(x=conc,y= Zresponse, group= conc))+
+  xlab("Concentration")+ylab("Normalized Percent Reaction")+ggtitle("Faceted ETG Plots")+
+  theme_bw(10)+
+  facet_wrap(~odour)
+
+summary(goodtrials$odour) # looking who to kill off...
+
+# this actually depends on what the question is: may be worth keeping 
+# single puff trials when comparing individual odours, but then tossing them when we want to compare
+# if there is a trend when looking across a series of concentrations
+
+# ---- QUESTIONS REFINED FURTHER - Need more refinement and possibly additional tests ---- 
+# SO
+# IS A REACTION TO AN ODOUR OF A SPECIFIC CONCENTRATION SIGNIFICANTLY DIFFERENT THAN THAT OF ANOTHER?
+# in this case we want a model to look at odour exclusivly, 
+#while possibly accounting trial and concentration as random variables?
+
+# IS A REACTION OF AN ODOUR ACROSS A SERIES OF CONCENTRATIONS SIGNIFICANTLY DIFFERENT THAN THAT OF ANOTHER?
+# this seems a little more difficult to proove
+
+# AND IS THE REACTION TO AN INDIVIDUAL ODOUR ACROSS A SERIES OF CONCENTRATIONS TRENDY? (EXPONENTIAL?)
+# this sounds like a completly other test required other than a GLMM and probably neds more data
+
+# --- Cutting odours, thoes that have zero observations (open for further info) ----
+# (one-off removal's should be only used if requireing a model to test across different concentrations)
+gucci<- filter(goodtrials,
+               !(odour %in% c("Hexane", "Palmitic Acid" )))
+# to remove one-offs add: "Octadecanol", "Ethyl Palmitate" in addition to the above.
+
+
+
+
+
+
+
+
+
+
+
+
+# ---- Polt that SOAB ----
 ggplot(data = nonegatives, aes(min, absamp))+
   geom_jitter(aes(colour = nonegatives$odour), width = 0.25)+
   xlab("Time")+ylab("Absamp")+ggtitle("Faceted ETG Plots")+
@@ -423,12 +475,7 @@ m2 <- glm(y ~ absoluteweather$odour, family = binomial)
 summary(m2)
 plot(m2)
 
-# remove noisy trials (for time being)
-goodtrials <- nonegatives[nonegatives$trial %in% c(1:8,11, 12), ]
-str(goodtrials)
-remove(subsetted)
-
-# Making a Linear model of Zresponse~conc+odour
+# ---- Making a Linear model of Zresponse~conc+odour ----
 library(tidyverse)
 library(modelr)
 library(glmm)
@@ -517,7 +564,7 @@ plot(mod01)
 # Trial as a random factor
 summary(goodtrials)
 plot(goodtrials$trial,goodtrials$Zresponse)
-fm01 <- lmer(Zresponse ~ odour + conc + (1|trial), goodtrials, REML = FALSE)
+print(fm01 <- lmer(Zresponse ~ -1+odour + conc + gb + (1|trial), goodtrials, REML = FALSE))
 
 
 
