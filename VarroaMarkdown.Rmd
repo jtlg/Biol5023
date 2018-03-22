@@ -82,8 +82,16 @@ levels(my.df$odour)
 ```
 
 #Creating a Faceted Plot for All Odours at All Concentrations
+```{r}
+ggplot(my.df)+
+  geom_boxplot(aes(x=conc,y= (normalized - 100), group= conc))+
+  xlab("Concentration")+ylab("Response to Odour")+ggtitle("Faceted ETG Plots")+
+  theme_bw(10)+
+  facet_wrap(~odour)
+```
+
 ##Step1: Filter Out Bad Runs
-We discovered that these runs were highly variable and produced messy plots, so we will remove them for now.
+We discovered that all runs with these odours were highly variable and produced messy plots, so we will remove them for now.
 ```{r}
 good_runs<- filter(my.df,
                     !(odour %in% c("1-Hexadecanol", "Methyl Palmitate", "Hexane",   "Palmitic Acid" )))
@@ -101,7 +109,7 @@ hist(subsetted$Zresponse,xlab="Normalized ETG Response",ylab="Frequency", main="
 ```
 
 ##Step3: Filter Out Negative Responses
-A negative response makes no sense physiologically, so this is an indication of a bad run. We remove these negative values from analysis.
+A negative response makes no sense physiologically, so this is an indication of a bad run. We remove these negative values from analysis by making them NA.
 ```{r}
 nonegatives <- subsetted %>%
   mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
@@ -119,8 +127,8 @@ ggplot(nonegatives)+
   
 From this plot, we can see the overall trend in ETG responses from Varroa mites at each concentration for each compound tested.
 
-##Step5: Taking temperature and humidity into account     
-We are still waiting on temperature and humidity data, but Mike has been in touch with someone regarding this.
+#Taking temperature and humidity into account     
+We are still waiting on better temperature and humidity data. We have been in touch with someone regarding this.
 
 ```{r, echo=TRUE}
 absoluteweather<- read.csv('absoluteweather.csv')
@@ -187,7 +195,7 @@ weather_matrix <- data.matrix(absoluteweather[7:10], rownames.force = NA)
 pairs(weather_matrix) # plots all the stuff simultaneiously
 ```
 
-# Plotting absolute amplitude (corrected to Hexane blank) versus time of trial.
+#Plotting absolute amplitude (corrected to Hexane blank) versus time of trial.
 
 ```{r, echo = TRUE}
 absoluteweather <- read.csv('absoluteweather.csv')
@@ -202,7 +210,6 @@ subsetted <- mutate(absoluteweather,
 ```
 ###Step2: Filter out negative responses
 ```{r, echo = TRUE}
-#Not sure whether to replace nonsense scores with NA or 0
 nonegatives <- subsetted %>%
   mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
 str(nonegatives$Zresponse)
@@ -219,9 +226,7 @@ ggplot(data = nonegatives, aes(min, absamp))+
 
 ####Cut out the Noisy Trails
 ```{r}
-nonegatives$trial <- as.numeric(nonegatives$trial)
 goodtrials <- nonegatives[nonegatives$trial %in% c(1:8,11, 12), ]
-goodtrials$trial <- as.factor(goodtrials$trial)
 str(goodtrials)
 remove(subsetted)
 ```
@@ -240,65 +245,54 @@ summary(aov_out)
 ```
 
 #Messing Around With Models
-##Linear Model (LM) 
-
 ```{r}
 library(tidyverse)
 library(modelr)
 options(na.action = na.warn)
 ```
 
+
 ```{r, echo=TRUE}
 ggplot(goodtrials, aes(trial, absamp))+
   geom_point(aes(colour=odour))
 ```
 
-Zresponse ~ concentration+odour
-```{r, echo=TRUE}
-mod01 <- lm(Zresponse~conc+odour, data = goodtrials)
-
-#fits red dots as predictions according to the model
-grid <- goodtrials %>% 
-  data_grid(odour,conc) %>% 
-  add_predictions(mod01)
-grid
-
-#plots our data
-ggplot(goodtrials, aes(x = conc)) + 
-  geom_point(aes(y = Zresponse)) +
-  geom_point(data = grid, aes(y = pred), colour = "red", size = 0.2)+
-  facet_wrap (~odour)
+That plot looks too spread out, so let's log transform the data and try again
+```{r}
+goodtrials$logging <- log(goodtrials$absamp)
+ggplot(goodtrials, aes(trial, logging))+
+  geom_jitter(aes(colour=odour))+
+  xlab("Trial")+ylab("Log(Absolute Amplitude of Response)")
 ```
 
-####Assessment of the Linear Model 
-This model doesn't appear to fit the data very well
+```{r}
+gucci<- filter(goodtrials,
+                    !(odour %in% c("1-Hexadecanol", "Methyl Palmitate", "Hexane",   "Palmitic Acid" )))
+```
 
 ##Poisson GLM
+These aren't count data, so we don't anticipate the poisson model to fit very well.
 ```{r}
-#I tells the below function to change Zresponse to an integer 
-mod01 <- glm(I(as.integer(goodtrials$Zresponse))~conc+odour, data = goodtrials, poisson)
+mod01 <- glm(I(as.integer(gucci$Zresponse))~conc+odour, data = gucci, poisson)
 par(mfrow=c(2, 2))
 summary(mod01)
-plot(mod01)
 ```
-
-####Assessment of the Poisson GLM 
-This model doesn't appear to fit the data well
 
 ##Gaussian GLM
 ```{r}
-mod02 <- glm(goodtrials$Zresponse~conc+odour, data = goodtrials)
+mod02 <- glm(Zresponse~conc+odour, data = gucci)
 par(mfrow=c(2, 2))
 summary(mod02)
 plot(mod02)
 ```
 
 ####Assessment of the Gaussian GLM 
-This model appears to fit the data better than the poisson model
+This model appears to fit the data better than the poisson model.
 
 ##Binomial GLM
+These data aren't binomial, but we wanted to fit a binomial model anyway just to see what it would look like.
 ```{r}
-bindf <- goodtrials %>%
+bindf <- gucci %>%
   mutate(BinZresponse= ifelse(Zresponse > 0, 1, 0))
 mod03 <- glm(bindf$BinZresponse~conc+odour, data = bindf, binomial)
 par(mfrow=c(2, 2))
@@ -309,6 +303,34 @@ plot(mod03)
 ####Assessment of the Binomial GLM 
 This model appears to fit the data terribly    
 
+##GLMM
+####Loading the required package
+
+```{r}
+library(lme4)
+```
+
+####Running the model
+Next, run the model and take random trial effects into account
+
+```{r}
+glmm1 <- glmer(Zresponse ~ conc*odour + (1| trial),
+               data = gucci, family = gaussian)
+
+summary(glmm1)
+```
+
+```{r}
+plot(glmm1)
+```
+
+```{r}
+print(glmm1, correlation=TRUE)
+```
+
+```{r}
+vcov(glmm1)
+```
 
 
  <a href="#top">Back to top</a>
