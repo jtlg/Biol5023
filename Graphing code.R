@@ -513,3 +513,14 @@ mod01 <- glm(I(as.integer(goodtrials$Zresponse))~conc+odour, data = goodtrials, 
 par(mfrow=c(2, 2))
 plot(mod01)
 
+
+# Trial as a random factor
+summary(goodtrials)
+plot(goodtrials$trial,goodtrials$Zresponse)
+fm01 <- lmer(Zresponse ~ odour + conc + (1|trial), goodtrials, REML = FALSE)
+
+
+
+
+
+
