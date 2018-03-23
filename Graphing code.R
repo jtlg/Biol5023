@@ -400,6 +400,7 @@ str(nonegatives$Zresponse)
 
 # ---- Step3: Remove any additional zeros (Hexane) omit this step if changing NA's to zeros ----
 nonegatives<-subset(nonegatives, Zresponse != 0)
+# this also apparently removes any and all NA's...
 
 
 
@@ -566,6 +567,65 @@ summary(goodtrials)
 plot(goodtrials$trial,goodtrials$Zresponse)
 print(fm01 <- lmer(Zresponse ~ -1+odour + conc + gb + (1|trial), goodtrials, REML = FALSE))
 
+
+
+
+# ---- A Pratical Guide to Mixed Models ----
+# PART ONE: FITTING YOUR DATA TO DIFFERENT DISTRIBUTIONS
+require(car)
+require(MASS)
+par(mfrow=c(2, 2))# this sets the number of polots you can have in the plot window
+
+# plot using normal distribution
+qqp(gucci$Zresponse, "norm")
+
+# plot using log-normal distribution
+qqp(gucci$Zresponse, "lnorm")
+
+# needs non-integers or something 
+#nbinom <- fitdistr(gucci$Zresponse, "Negative Binomial")
+#qqp(goodtrials$zerot, "nbinom", size = nbinom$estimate[[1]], mu = nbinom$estimate[[2]])
+# plot poisson distribution (warnings regarding non-integer)
+poisson <- fitdistr(gucci$Zresponse, "Poisson")
+qqp(gucci$Zresponse, "pois", poisson$estimate)
+
+#plot gamma distribution ("IM THE BEST" - toad, probably)
+gamma <- fitdistr(gucci$Zresponse, "gamma")
+qqp(gucci$Zresponse, "gamma", shape = gamma$estimate[[1]], rate = gamma$estimate[[2]])
+
+
+
+
+# ---- OUTPUTS OF A LMM
+#THE RANDOM EFFECTS VARIANCE AND ST.DEV
+# an estimate of the variance explained by the random effect, important,
+#  if it's indistinguishable from zero, then your random effect probably doesn't matter
+# and you can go ahead and do a regular linear model instead
+
+# Next we have estimates of the fixed effects, with standard errors
+# Some journals like you to report the results of these models as effect sizes with confidence intervals
+#  if you want some p-values you'll have to turn to the Anova function in the car package
+#library(car)
+#Anova(<your lmm>)
+
+# ---- FAILURE TO CONVERGE MODEL
+# R may throw you a "failure to converge" error, 
+# which usually is phrased "iteration limit reached without convergence."
+# this means your model has too many factors and not a big enough sample size, and cannot be fit
+# What you should then do is drop fixed effects and random effects from the model 
+# and compare to see which fits the best.
+
+# 1. Drop fixed effects and random effects one at a time. 
+# 2. Hold the fixed effects constant and drop random effects one at a time and find what works best
+# 3. Then hold random effects constant and drop fixed effects one at a time.
+# anova function with a lowercase 'a' is for comparing models (from pkg: car).
+
+# 3b. If your data are not normally distributed
+# 1. we need to test whether we can use penalized quasilikelihood (PQL) or not
+# a flexible technique that can deal with non-normal data, unbalanced design, and crossed random effects
+#  it produces biased estimates if your response variable fits a discrete count distribution, 
+# like Poisson or binomial, and the mean is less than 5 - or if your response variable is binary
+mean(gucci$Zresponse) # goudda
 
 
 
