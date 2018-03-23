@@ -584,9 +584,7 @@ summary(m2)
 plot(m2)
 
 # remove noisy trials (for time being)
-nonegatives$trial <- as.numeric(nonegatives$trial)
 goodtrials <- nonegatives[nonegatives$trial %in% c(1:8,11, 12), ]
-goodtrials$trial <- as.factor(goodtrials$trial)
 str(goodtrials)
 remove(subsetted)
 
@@ -667,7 +665,7 @@ summary(aov_out)
 
 #I tells formula to change zresponse to an integer 
 mod01 <- glm(I(as.integer(goodtrials$Zresponse))~ conc + odour, data = goodtrials, poisson)
-par(mfrow=c(2, 2))
+par(mfrow=c(1,1))
 plot(mod01)
 
 # ---- Random Break ----
@@ -885,3 +883,17 @@ Contraception <- within(Contraception,ch <- factor(livch != 0, labels = c("N", "
 # so we made a Y/N column for childern in families
 (fm11 <- glmer(use ~ age + I(age^2) + urban + ch + (1 | district), Contraception, binomial))
 anova(fm11,fm10)
+
+
+
+
+# ---- A Pratical Guide to Mixed Models ----
+require(car)
+require(MASS)
+goodtrials$zerot <- (goodtrials$Zresponse + 1)
+par(mfrow=c(1, 1))
+qqp(goodtrials$zerot, "norm")
+qqp(goodtrials$zerot, "lnorm")
+
+nbinom <- fitdistr(goodtrials$zerot, "Negative Binomial")
+qqp(goodtrials$zerot, "nbinom", size = nbinom$estimate[[1]], mu = nbinom$estimate[[2]])
