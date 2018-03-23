@@ -439,26 +439,15 @@ gucci<- filter(goodtrials,
                !(odour %in% c("Hexane", "Palmitic Acid" )))
 # to remove one-offs add: "Octadecanol", "Ethyl Palmitate" in addition to the above.
 
-
-
-
-
-
-
-
-
-
-
-
 # ---- Polt that SOAB ----
-ggplot(data = nonegatives, aes(min, absamp))+
-  geom_jitter(aes(colour = nonegatives$odour), width = 0.25)+
+ggplot(data = gucci, aes(min, absamp))+
+  geom_jitter(aes(colour = gucci$odour), width = 0.25)+
   xlab("Time")+ylab("Absamp")+ggtitle("Faceted ETG Plots")+
   theme_bw(10)+
   facet_wrap(~trial)
 
 # plot of the normalized data
-ggplot(data = nonegatives, mapping = aes(log(Zresponse)))+
+ggplot(data = gucci, mapping = aes(log(Zresponse)))+
   geom_histogram(bins = 50)
 
 # ---- messing around with models ----
@@ -550,22 +539,22 @@ vcov(glmm1)
 isGLMM(glmm1) # about as useful as an ass
 
 # ---- Analysis of Variance ----
-plot(aov_out <- aov(Zresponse~trial*odour*conc, data = goodtrials))
+plot(aov_out <- aov(Zresponse~trial*odour*conc, data = gucci))
 summary(aov_out)
 warnings()
 
-plot(mod01 <- lm(Zresponse~-1+trial*odour*conc, data = goodtrials))
+plot(mod01 <- lm(Zresponse~-1+trial*odour*conc, data = gucci))
 
 #I tells formula to change zresponse to an integer 
-mod01 <- glm(I(as.integer(goodtrials$Zresponse))~conc+odour, data = goodtrials, poisson)
+mod01 <- glm(I(as.integer(gucci$Zresponse))~conc+odour, data = goodtrials, poisson)
 par(mfrow=c(2, 2))
 plot(mod01)
 
 
 # Trial as a random factor
-summary(goodtrials)
-plot(goodtrials$trial,goodtrials$Zresponse)
-print(fm01 <- lmer(Zresponse ~ -1+odour + conc + gb + (1|trial), goodtrials, REML = FALSE))
+summary(gucci)
+plot(gucci$trial,gucci$Zresponse)
+print(fm01 <- lmer(Zresponse ~ -1+odour + conc + gb + (1|trial), gucci, REML = FALSE))
 
 
 
