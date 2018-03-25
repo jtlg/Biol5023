@@ -400,6 +400,7 @@ str(nonegatives$Zresponse)
 
 # ---- Step3: Remove any additional zeros (Hexane) omit this step if changing NA's to zeros ----
 nonegatives<-subset(nonegatives, Zresponse != 0)
+nonegatives<-subset(nonegatives, conc != 0)
 # this also apparently removes any and all NA's...
 
 
@@ -483,19 +484,19 @@ library(glmm)
 options(na.action = na.warn)
 
 # changed to log of absamp... guess I need to carry this over to the rest of csv data
-logging <- log(goodtrials$absamp)
-ggplot(goodtrials, aes(trial, logging))+
+logging <- log(gucci$absamp)
+ggplot(gucci, aes(trial, logging))+
   #geom_point(aes(colour=odour))+
   geom_jitter(aes(colour=odour))
 
-mod01 <- lm(Zresponse~conc+odour, data = goodtrials)
+mod01 <- lm(Zresponse~conc+odour, data = gucci)
 
-grid <- goodtrials %>% 
-  data_grid(odour,conc) %>% 
+grid <- gucci %>% 
+  data_grid(data = gucci, odour,conc) %>% 
   add_predictions(mod01)
 grid
 
-ggplot(goodtrials, aes(x = conc)) + 
+ggplot(gucci, aes(x = conc)) + 
   geom_point(aes(y = Zresponse)) +
   geom_point(data = grid, aes(y = pred), colour = "red", size = 0.2)+
   facet_wrap (~odour)
@@ -536,11 +537,11 @@ print(mod01)
    #   start = NULL, verbose = 0L, nAGQ = 1L, subset, weights, na.action,
      # offset, contrasts = NULL, devFunOnly = FALSE, ...)
 library(lme4)
-glmm1 <- glmer(Zresponse ~ + odour + (1| trial),
-              data = goodtrials, family = poisson)
+glmm1 <- glmer(Zresponse ~ -1 + odour + (1| trial),
+              data = gucci)
 
-glmm1 <- glmer(Zresponse ~ conc*odour + (1| trial),
-               data = goodtrials, family = poisson)
+glmm1 <- glmer(Zresponse ~ -1 + conc*odour + (1| trial),
+               data = gucci)
 
 
 summary(glmm1)
@@ -550,7 +551,7 @@ vcov(glmm1)
 isGLMM(glmm1) # about as useful as an ass
 
 # ---- Analysis of Variance ----
-plot(aov_out <- aov(Zresponse~trial*odour*conc, data = goodtrials))
+plot(aov_out <- aov(Zresponse~trial*odour*conc, data = gucci))
 summary(aov_out)
 warnings()
 
