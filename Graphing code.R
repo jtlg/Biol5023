@@ -30,6 +30,22 @@ levels(data$conc)
 #looking to see what the types of odour are
 levels(data$odour)
 
+# ---- plotting without filtering ----
+data <- mutate(data,
+                    Zresponse = normalized - 100)
+
+data <- data %>%
+  mutate(Zresponse= ifelse(Zresponse <0, NA, Zresponse)) 
+
+data <- subset(data, odour != "Hexane")
+
+
+ggplot(data = data)+
+  geom_boxplot(aes(x=conc,y= Zresponse, group= conc))+
+  xlab("Concentration")+ylab("Normalized Percent Reaction")+ggtitle("Faceted ETG Plots")+
+  theme_bw(10)+
+  facet_wrap(~odour)
+
 # ---- filter data and pipeline for Methyl Palmitate and "&" concentration 0.01 ----
 filter(data, odour=="Methyl Palmitate" & conc=="0.01") %>%
   summarise("Mean Methyl Palmitate Reaction at Concentration 0.01"=mean(percent))
@@ -352,6 +368,9 @@ ggplot(data = absoluteweather, mapping = aes(min, absamp)) +
 ggplot(data = absoluteweather, mapping = aes(absamp))+
   geom_histogram(bins = 50)
 
+ggplot(data = nonegatives, mapping = aes(Zresponse))+
+  geom_histogram(bins = 50)
+
 # correlations
 cor(absoluteweather$absamp, absoluteweather$temp)
 cov(absoluteweather$absamp, absoluteweather$temp)
@@ -616,6 +635,49 @@ qqp(gucci$Zresponse, "gamma", shape = gamma$estimate[[1]], rate = gamma$estimate
 #  it produces biased estimates if your response variable fits a discrete count distribution, 
 # like Poisson or binomial, and the mean is less than 5 - or if your response variable is binary
 mean(gucci$Zresponse) # goudda
+
+# That means we can proceed with the PQL method. 
+# But before we proceed, let's return to the matter of transformation to normality.
+
+# performing a GLMM on an untransformed variable, 
+# better because it better captures the variance of x
+library(MASS)
+library(tidyverse)
+
+# Note that instead of taking all the fixed and random effects as one formula, 
+# the random effects get their own argument in the glmmPQL function.
+
+# To set the distribution to log-normal, 
+# we set the family to gaussian (another word for normal) and the link to log.
+
+# The link can be anything, 
+# though if you want to use something besides log or inverse 
+# then you'll have to research how to customize the link function yourself.
+gucci <- tibble::rowid_to_column(gucci, "Test.ID")
+str(gucci$Test.ID)
+
+PQL <- glmmPQL(Zresponse ~ odour + conc, ~1 | trial/Test.ID, family = gaussian(link = "log"),
+               data = gucci, verbose = FALSE)
+summary(PQL)
+plot(PQL)
+
+
+# KNOW YOUR DATA 
+# my first step is to do density plots of my variable of interest, 
+# broken down by the explanatory variable I'm most curious about
+
+library(ggplot2)
+ggplot(gucci, aes(x = Zresponse)) + geom_density() + facet_wrap (~ conc)
+
+# Plotting is also important for assessing model fit.
+# One easy application is graphing the residuals of a model.
+# the distances of of the points in the scatterplot from the best-fit line.
+
+# If the model fits, then if you plot residuals against the fitted values, 
+# you should see random scatter.
+# If the scatter is not random that means there's some other random or fixed effect 
+# that explains variation in your data that you're missing.
+
 
 
 
