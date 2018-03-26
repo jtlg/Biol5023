@@ -512,7 +512,7 @@ grid <- gucci %>%
 grid
 
 ggplot(gucci, aes(x = conc)) + 
-  geom_point(aes(y = Zresponse)) +
+  geom_boxplot(aes(y = Zresponse)) +
   geom_point(data = grid, aes(y = pred), colour = "red", size = 0.2)+
   facet_wrap (~odour)
 

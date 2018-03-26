@@ -195,7 +195,7 @@ weather_matrix <- data.matrix(absoluteweather[7:10], rownames.force = NA)
 pairs(weather_matrix) # plots all the stuff simultaneiously
 ```
 
-#Plotting absolute amplitude (corrected to Hexane blank) versus time of trial.
+#Absolute amplitude (corrected to Hexane blank) versus length of trial
 
 ```{r, echo = TRUE}
 absoluteweather <- read.csv('absoluteweather.csv')
@@ -230,7 +230,7 @@ goodtrials <- nonegatives[nonegatives$trial %in% c(1:8,11, 12), ]
 str(goodtrials)
 remove(subsetted)
 ```
-
+####
 ####Histogram of the normalized data
 ```{r, echo=TRUE}
 ggplot(data = nonegatives, mapping = aes(Zresponse))+
@@ -267,7 +267,7 @@ ggplot(goodtrials, aes(trial, logging))+
 
 ```{r}
 gucci<- filter(goodtrials,
-                    !(odour %in% c("1-Hexadecanol", "Methyl Palmitate", "Hexane",   "Palmitic Acid" )))
+                    !(odour %in% c("1-Hexadecanol", "Methyl Palmitate", "Hexane", "Palmitic Acid" )))
 ```
 
 ##Poisson GLM
@@ -308,29 +308,81 @@ This model appears to fit the data terribly
 
 ```{r}
 library(lme4)
+library(modelr)
 ```
 
 ####Running the model
-Next, run the model and take random trial effects into account
+Next, run the model and take random trial effects into account. Since a gaussian glm fit our data the best out of all the glms we ran, we will assume a gaussian family for glmm as well.         
 
+Run several models including different combinations of variables to see which fits the data best.     
 ```{r}
-glmm1 <- glmer(Zresponse ~ conc*odour + (1| trial),
-               data = gucci, family = gaussian)
+glmm1 <- glmer(Zresponse ~ -1 + odour + conc + (1|trial) + (1|odour:conc), data = gucci, family = gaussian)
+glmm2 <- glmer(Zresponse ~ -1 + odour + (1|trial), data = gucci, family = gaussian)
+glmm3 <- glmer(Zresponse ~ -1 + odour + conc + (1|trial), data = gucci, family = gaussian)
+glmm4 <- glmer(Zresponse ~ -1 + odour + conc + gb + (1|trial), data = gucci, family = gaussian)
+glmm5 <- glmer(Zresponse ~ -1 + odour * conc + (1|trial), data = gucci, family = gaussian)
 
-summary(glmm1)
 ```
 
 ```{r}
 plot(glmm1)
+plot(glmm2)
+plot(glmm3)
+plot(glmm4)
+plot(glmm5)
+```
+```{r}
+grid2 <- gucci %>% 
+   data_grid(data= gucci, odour,conc) %>% 
+   add_predictions(glmm2)
+
+ggplot(gucci, aes(x = conc)) + 
+  geom_jitter(aes(y = Zresponse)) +
+  geom_boxplot(data = grid2, aes(y = pred), colour = "purple", size = 0.2)+
+  facet_wrap (~odour)
+```
+
+
+```{r}
+grid3 <- gucci %>% 
+   data_grid(data= gucci, odour,conc) %>% 
+   add_predictions(glmm3)
+
+ggplot(gucci, aes(x = conc)) + 
+  geom_jitter(aes(y = Zresponse)) +
+  geom_boxplot(data = grid3, aes(y = pred), colour = "red", size = 0.2)+
+  facet_wrap (~odour)
 ```
 
 ```{r}
-print(glmm1, correlation=TRUE)
+grid4 <- gucci %>% 
+   data_grid(data= gucci, odour,conc) %>% 
+   add_predictions(glmm4)
+
+ggplot(gucci, aes(x = conc)) + 
+  geom_jitter(aes(y = Zresponse)) +
+  geom_boxplot(data = grid4, aes(y = pred), colour = "orange", size = 0.2)+
+  facet_wrap (~odour)
 ```
 
 ```{r}
-vcov(glmm1)
+grid5 <- gucci %>% 
+   data_grid(data= gucci, odour,conc) %>% 
+   add_predictions(glmm5)
+
+ggplot(gucci, aes(x = conc)) + 
+  geom_jitter(aes(y = Zresponse)) +
+  geom_boxplot(data = grid5, aes(y = pred), colour = "blue", size = 0.2)+
+  facet_wrap (~odour)
 ```
+
+
+Test, using an ANOVA, which model best fits the data
+
+```{r}
+anova(glmm1, glmm2, glmm3, glmm4, glmm5)
+```
+
 
 
  <a href="#top">Back to top</a>

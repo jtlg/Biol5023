@@ -245,7 +245,6 @@ mean(gucci$Zresponse) # goudda
 # better because it better captures the variance of x
 library(MASS)
 library(tidyverse)
-
 # Note that instead of taking all the fixed and random effects as one formula, 
 # the random effects get their own argument in the glmmPQL function.
 
@@ -271,9 +270,9 @@ library(lme4)
 f2r2 <- glmer(Zresponse~-1+odour+conc+(1|trial)+(1|odour:conc), data = gucci, family = gaussian)
 f1r1 <- glmer(Zresponse~-1+odour+(1|trial), data = gucci, family = gaussian)
 f2r1 <- glmer(Zresponse~-1+odour+conc+(1|trial), data = gucci, family = gaussian)
-f2r2a <- glmer(Zresponse~-1+odour+conc+gb+(1|trial), data = gucci, family = gaussian)
+f2r3 <- glmer(Zresponse~-1+odour+conc+gb+(1|trial), data = gucci, family = gaussian)
 #testing for significance
-anova(f1r1,f2r1,f2r2,f2r2a)
+
 
 
 
