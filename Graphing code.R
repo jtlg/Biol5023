@@ -470,6 +470,13 @@ ggplot(data = gucci, aes(min, absamp))+
 ggplot(data = gucci, mapping = aes(log(Zresponse)))+
   geom_histogram(bins = 50)
 
+mepa <- subset(data, odour == "Octanoic Acid")
+list(data$odour)
+ggplot(data = mepa, mapping = aes(conc,Zresponse)) +
+  geom_boxplot()+
+  geom_jitter(aes(colour = mepa$odour), width = 0.15)
+  
+
 # ---- messing around with models ----
 # garbage - ignore
 require(ggplot2)

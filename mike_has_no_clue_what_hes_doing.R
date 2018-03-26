@@ -426,7 +426,9 @@ print(mm)
 # mixed effects model (has both random and fixed) an example is 2-Way ANOVA
 
 # 
-
+library(tidyverse)
+library(ggplot2)
+library(lme4)
 milk <- glmm(Zresponse ~ -1+odour, varcomps.names = c("Test.ID"),random = list(~0+trial), 
              data = gucci, m = 1, doPQL = TRUE, family.glmm = binomial.glmm)
 # can't do gaussian
@@ -436,16 +438,23 @@ milk <- glmm(Zresponse ~ -1+odour, varcomps.names = c("Test.ID"),random = list(~
 #      offset, contrasts = NULL, mustart, etastart,
  #     devFunOnly = FALSE, ...)
 
-glmer(Zresponse~-1+odour+conc+(1|trial), data = gucci, family = gaussian)
+f2r2 <- glmer(Zresponse~-1+odour+conc+(1|trial)+(1|odour:conc), data = gucci, family = gaussian)
+f1r1 <- glmer(Zresponse~-1+odour+(1|trial), data = gucci, family = gaussian)
+f2r1 <- glmer(Zresponse~-1+odour+conc+(1|trial), data = gucci, family = gaussian)
+f2r2a <- glmer(Zresponse~-1+odour+conc+gb+(1|trial), data = gucci, family = gaussian)
+
+anova(f1r1,f2r1,f2r2,f2r2a)
+
+
+
 # The random effect is represented by (1|operator) indicating that the data is grouped by operator and 
 # the 1 indicating that the random effect is constant within each group. 
 
+#VIOLATED DUE TO NON-NORMALITY OF Q-Q PLOT
 aov1 <- aov(Zresponse~-1+odour, gucci)
 aov2 <- aov(Zresponse~-1+odour*conc, gucci)
 aov3 <- aov(Zresponse~-1+odour*conc*gb, gucci)
 aov4 <- aov(Zresponse~-1+odour*conc*gb*trial, gucci)
 aov5 <- aov(Zresponse~-1+odour*conc*gb*trial*Test.ID, gucci)
 aov6 <- aov(Zresponse~-1+odour*conc*gb*trial*Test.ID*min, gucci)
-
-aov(aov1*aov2*aov3*aov4*aov5*aov6)
-
+print(anova(aov1, aov2, aov3, aov4, aov5, aov6))

@@ -238,6 +238,42 @@ qqp(gucci$Zresponse, "gamma", shape = gamma$estimate[[1]], rate = gamma$estimate
 mean(gucci$Zresponse) # goudda
 
 
+# That means we can proceed with the PQL method. 
+# But before we proceed, let's return to the matter of transformation to normality.
+
+# performing a GLMM on an untransformed variable, 
+# better because it better captures the variance of x
+library(MASS)
+library(tidyverse)
+
+# Note that instead of taking all the fixed and random effects as one formula, 
+# the random effects get their own argument in the glmmPQL function.
+
+# To set the distribution to log-normal, 
+# we set the family to gaussian (another word for normal) and the link to log.
+
+# The link can be anything, 
+# though if you want to use something besides log or inverse 
+# then you'll have to research how to customize the link function yourself.
+gucci <- tibble::rowid_to_column(gucci, "Test.ID")
+str(gucci$Test.ID)
+
+PQL <- glmmPQL(Zresponse ~ odour + conc, ~1 | trial/Test.ID, family = gaussian(link = "log"),
+               data = gucci, verbose = FALSE)
+summary(PQL)
+plot(PQL)
+
+
+
+
+# fitting general linear mixed effect models 
+library(lme4)
+f2r2 <- glmer(Zresponse~-1+odour+conc+(1|trial)+(1|odour:conc), data = gucci, family = gaussian)
+f1r1 <- glmer(Zresponse~-1+odour+(1|trial), data = gucci, family = gaussian)
+f2r1 <- glmer(Zresponse~-1+odour+conc+(1|trial), data = gucci, family = gaussian)
+f2r2a <- glmer(Zresponse~-1+odour+conc+gb+(1|trial), data = gucci, family = gaussian)
+#testing for significance
+anova(f1r1,f2r1,f2r2,f2r2a)
 
 
 
