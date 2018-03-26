@@ -273,9 +273,10 @@ gucci<- filter(goodtrials,
 ##Poisson GLM
 These aren't count data, so we don't anticipate the poisson model to fit very well.
 ```{r}
-mod01 <- glm(I(as.integer(gucci$Zresponse))~conc+odour, data = gucci, poisson)
+mod01 <- glm(Zresponse~-1+conc+odour, data = gucci, family = Gamma)
 par(mfrow=c(2, 2))
 summary(mod01)
+plot(mod01)
 ```
 
 ##Gaussian GLM
