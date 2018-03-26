@@ -272,8 +272,21 @@ f2r2 <- glmer(Zresponse~-1+odour+conc+(1|trial)+(1|odour:conc), data = gucci, fa
 f1r1 <- glmer(Zresponse~-1+odour+(1|trial), data = gucci, family = gaussian)
 f2r1 <- glmer(Zresponse~-1+odour+conc+(1|trial), data = gucci, family = gaussian)
 f2r2a <- glmer(Zresponse~-1+odour+conc+gb+(1|trial), data = gucci, family = gaussian)
+f1x1r1 <- glmer(Zresponse~-1+odour*conc+(1|trial), data = gucci, family = gaussian)
+
+
 #testing for significance
-anova(f1r1,f2r1,f2r2,f2r2a)
+anova(f1r1,f2r1,f2r2,f2r2a, f1x1r1)
+
+grid <- gucci %>% 
+  data_grid(data= gucci, odour,conc) %>% 
+  add_predictions(f1r1)
+grid
+
+ggplot(gucci, aes(x = conc)) + 
+  geom_boxplot(aes(y = Zresponse)) +
+  geom_point(data = grid, aes(y = pred), colour = "red", size = 0.2)+
+  facet_wrap (~odour)
 
 
 
