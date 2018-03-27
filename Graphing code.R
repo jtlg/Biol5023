@@ -617,6 +617,35 @@ gamma <- fitdistr(gucci$Zresponse, "gamma")
 qqp(gucci$Zresponse, "gamma", shape = gamma$estimate[[1]], rate = gamma$estimate[[2]])
 
 
+require(fitdistrplus)
+require(logspline)
+descdist(gucci$Zresponse, discrete = FALSE)
+fit.gamma <- fitdist(gucci$Zresponse, "gamma")
+plot(fit.gamma)
+
+fitdistr(xscaled,"beta",list(shape1=1,shape2=1)) 
+# Scaling Zresponse so values range from 0-1
+xscaled <- (gucci$Zresponse-min(gucci$Zresponse))/max(gucci$Zresponse)
+xrescaled <- max(gucci$Zresponse)*xscaled + min(gucci$Zresponse) 
+# Find maximum and minimum value of the data.
+summary(xscaled)
+# Plot the data on a histogram.
+hist(xscaled)
+# density Plot
+plot(density(xscaled))
+# Calculate mean and variance of the data.
+mu <- mean(xscaled)
+var <- var(xscaled)
+## Define function to estimate parameters of a beta distribution.
+estBetaParams <- function(mu, var) {
+  alpha <- ((1 - mu) / var - 1 / mu) * mu ^ 2
+  beta <- alpha * (1 / mu - 1)
+  return(params = list(alpha = alpha, beta = beta))
+}
+## Apply function to your data.
+estBetaParams(mu, var)
+library(goft)
+ig_test(gucci$Zresponse, method = "transf")
 
 
 # ---- OUTPUTS OF A LMM
@@ -670,7 +699,7 @@ library(tidyverse)
 gucci <- tibble::rowid_to_column(gucci, "Test.ID")
 str(gucci$Test.ID)
 
-PQL <- glmmPQL(Zresponse ~ odour + conc, ~1 | trial/Test.ID, family = gaussian(link = "log"),
+PQL <- glmmPQL(Zresponse ~ -1 + odour + conc, ~1 | trial/Test.ID, family = Gamma(link = "log"),
                data = gucci, verbose = FALSE)
 summary(PQL)
 plot(PQL)
@@ -693,7 +722,10 @@ ggplot(gucci, aes(x = Zresponse)) + geom_density() + facet_wrap (~ conc)
 # that explains variation in your data that you're missing.
 
 
+library(lme4)
+glmer(Zresponse~-1+odour+(1|trial), data = gucci, family = inverse.gaussian(link= "log"))
+glmer(Zresponse~odour+(1|trial), data = gucci, family = Gamma)
 
-
-
-
+# Gamma(link = "inverse" or "identity" or "log")
+#inverse.gaussian(link = "1/mu^2" or "inverse" or "identity" or "log")
+warnings()
