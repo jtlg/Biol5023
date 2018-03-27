@@ -230,7 +230,7 @@ goodtrials <- nonegatives[nonegatives$trial %in% c(1:8,11, 12), ]
 str(goodtrials)
 remove(subsetted)
 ```
-####
+
 ####Histogram of the normalized data
 ```{r, echo=TRUE}
 ggplot(data = nonegatives, mapping = aes(Zresponse))+
@@ -316,11 +316,11 @@ Next, run the model and take random trial effects into account. Since a gaussian
 
 Run several models including different combinations of variables to see which fits the data best.     
 ```{r}
-glmm1 <- glmer(Zresponse ~ -1 + odour + conc + (1|trial) + (1|odour:conc), data = gucci, family = gaussian)
-glmm2 <- glmer(Zresponse ~ -1 + odour + (1|trial), data = gucci, family = gaussian)
-glmm3 <- glmer(Zresponse ~ -1 + odour + conc + (1|trial), data = gucci, family = gaussian)
-glmm4 <- glmer(Zresponse ~ -1 + odour + conc + gb + (1|trial), data = gucci, family = gaussian)
-glmm5 <- glmer(Zresponse ~ -1 + odour * conc + (1|trial), data = gucci, family = gaussian)
+glmm1 <- glmer(Zresponse ~ -1 + odour + (1|trial), data = gucci)
+glmm2 <- glmer(Zresponse ~ -1 + odour + conc + (1|trial), data = gucci)
+glmm3 <- glmer(Zresponse ~ -1 + odour + conc + gb + (1|trial), data = gucci)
+glmm4 <- glmer(Zresponse ~ -1 + odour * conc + (1|trial), data = gucci)
+glmm5 <- glmer(Zresponse ~ -1 +  conc + (1|trial), data = gucci)
 
 ```
 
@@ -383,6 +383,40 @@ Test, using an ANOVA, which model best fits the data
 anova(glmm1, glmm2, glmm3, glmm4, glmm5)
 ```
 
+#Further subset the data to reduce variability
+
+```{r}
+gaga <- gucci[gucci$trial %in% c(4,5,6,11,12), ]
+lasttry<- filter(gaga,
+                    !(odour %in% c("1-Hexadecanol", "Methyl Palmitate", "Hexane", "Palmitic Acid", "Ethyl Palmitate" )))
+
+ggplot(lasttry, aes(trial, log(absamp)))+
+  geom_jitter(aes(colour=odour))
+```
+
+##GLMM on subset
+```{r}
+guccigagaGLMM <- glmer(Zresponse ~ -1 + odour + (1|trial), data = lasttry)
+plot(guccigagaGLMM)
+
+```
+
+##Visualize GLMM Predictions
+```{r}
+gridded <- lasttry %>% 
+   data_grid(data= lasttry, odour,conc) %>% 
+   add_predictions(guccigagaGLMM)
+
+ggplot(lasttry, aes(x = conc)) + 
+  geom_jitter(aes(y = Zresponse)) +
+  geom_boxplot(data = gridded, aes(y = pred), colour = "deeppink", size = 0.2)+
+  facet_wrap (~odour)
+
+```
+
+```{r}
+summary(guccigagaGLMM)
+```
 
 
  <a href="#top">Back to top</a>

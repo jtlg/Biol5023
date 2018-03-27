@@ -467,6 +467,13 @@ ggplot(data = gucci, aes(min, absamp))+
   facet_wrap(~trial)
 
 # plot of the normalized data
+
+ggplot(goodtrials, aes(trial, absamp))+
+  geom_jitter(aes(colour=odour))+ xlab("Trial")+ ylab("Absolute Amplitude of Response")
+
+ggplot(data = gucci, mapping = aes(log(Zresponse)))+
+  geom_histogram(bins = 50)
+
 ggplot(data = gucci, mapping = aes(log(Zresponse)))+
   geom_histogram(bins = 50)
 
