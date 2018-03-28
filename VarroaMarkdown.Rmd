@@ -384,6 +384,10 @@ Test, using an ANOVA, which model best fits the data
 anova(glmm1, glmm2, glmm3, glmm4, glmm5)
 ```
 
+```{r}
+print(glmm2)
+```
+
 #Further subset the data to reduce variability
 
 ```{r}
@@ -418,6 +422,9 @@ ggplot(lasttry, aes(x = conc)) +
 ```{r}
 summary(guccigagaGLMM)
 ```
+
+
+
 
 
  <a href="#top">Back to top</a>
