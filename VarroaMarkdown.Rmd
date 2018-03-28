@@ -385,7 +385,7 @@ anova(glmm1, glmm2, glmm3, glmm4, glmm5)
 ```
 
 ```{r}
-print(glmm2)
+print(glmm5)
 ```
 
 #Further subset the data to reduce variability
@@ -422,8 +422,6 @@ ggplot(lasttry, aes(x = conc)) +
 ```{r}
 summary(guccigagaGLMM)
 ```
-
-
 
 
 
