@@ -359,7 +359,7 @@ ggplot(data = absoluteweather, mapping = aes(dewp, absamp)) +
   facet_wrap(~trial)
 
 # garbage
-ggplot(data = absoluteweather, mapping = aes(min, absamp)) + 
+ggplot(data = nonegatives, mapping = aes(min, Zresponse)) + 
   geom_jitter(aes(colour = absoluteweather$odour), width = 0.25) +
   ggtitle("amplitude vs time")+
   facet_wrap(~trial)
@@ -421,7 +421,7 @@ str(nonegatives$Zresponse)
 nonegatives<-subset(nonegatives, Zresponse != 0)
 nonegatives<-subset(nonegatives, conc != 0)
 # this also apparently removes any and all NA's...
-
+str(nonegatives)
 
 
 # ---- Step4: Remove noisy trials (for time being) ----
@@ -609,7 +609,7 @@ qqp(gucci$Zresponse, "pois", poisson$estimate)
 gamma <- fitdistr(gucci$Zresponse, "gamma")
 qqp(gucci$Zresponse, "gamma", shape = gamma$estimate[[1]], rate = gamma$estimate[[2]])
 
-
+par(mfrow=c(1, 1))# this sets the number of polots you can have in the plot window
 require(fitdistrplus)
 require(logspline)
 descdist(gucci$Zresponse, discrete = FALSE)
@@ -722,3 +722,91 @@ glmer(Zresponse~odour+(1|trial), data = gucci, family = Gamma)
 # Gamma(link = "inverse" or "identity" or "log")
 #inverse.gaussian(link = "1/mu^2" or "inverse" or "identity" or "log")
 warnings()
+
+
+gaga <- gucci[gucci$trial %in% c(4:6,11, 12), ]
+levels(gaga$trial)
+
+library(lme4)
+library(MASS)
+library(tidyverse)
+require(car)
+require(MASS)
+library(modelr)
+library(glmm)
+fruit <- glmer(Zresponse~-1+odour+(1|trial), data = gaga)
+summary(fruit, correlation = TRUE)
+
+vegatables <- glmer(Zresponse~-1+odour+(1|trial), data = gucci)
+summary(vegatables, correlation = TRUE)
+
+
+
+grud <- gucci %>% 
+  data_grid(data= gucci, odour,conc) %>% 
+  add_predictions(vegatables)
+grud
+
+grid <- gaga %>% 
+  data_grid(data= gaga, odour,conc) %>% 
+  add_predictions(fruit)
+grid
+
+ggplot(gucci, aes(x = conc)) + 
+  geom_jitter(aes(y = Zresponse, colour = gucci$min), width = 0.25)+
+  geom_boxplot(data = grid, aes(y = pred), colour = "red", size = 0.2)+
+  geom_boxplot(data = grud, aes(y = pred), colour = "blue", size = 0.2)+
+  facet_wrap (~odour)
+
+
+
+
+
+# modelling all Zresponse data
+nonegatives <- tibble::rowid_to_column(nonegatives, "Test.ID")
+
+meat <- glmer(Zresponse~-1+odour+(1|trial), data = nonegatives, REML = FALSE)
+summary(meat)
+
+
+grip <- nonegatives %>% 
+  data_grid(data= nonegatives, odour,conc) %>% 
+  add_predictions(meat)
+grip
+
+
+ggplot(nonegatives, aes(x = conc)) + 
+  geom_jitter(aes(y = Zresponse), width = 0.25)+
+  geom_boxplot(data = grip, aes(y = pred), colour = "blue", size = 0.2)+
+  facet_wrap (~odour)
+
+
+meaty <- glmer(Zresponse~-1+odour+conc+(1|trial), data = nonegatives)
+meteor <- glmer(Zresponse~-1+odour+conc+gb+(1|trial), data = nonegatives) # highest AIC
+#meeting <- glmer(Zresponse~-1+odour+(1|trial)+(1|odour), data = nonegatives)
+meek <- glmer(Zresponse~-1+conc+(1|trial), data = nonegatives) # lowest AIC
+print(meat <- glmer(Zresponse~-1+odour+(1|trial/odour), data = nonegatives, REML = FALSE)) # second lowest AIC
+print(moo <- glmer(Zresponse~-1+odour+(temp|trial), data = nonegatives, REML = FALSE)) # second lowest AIC
+print(moo <- glmer(Zresponse~-1+odour*conc+(1|trial), data = nonegatives, REML = FALSE)) 
+print(moo <- glmer(Zresponse~-1+odour+conc+(odour-1|trial), data = nonegatives, REML = FALSE)) 
+anova(meat, moo, test = "chisq")
+
+ranef(meat)
+
+
+
+
+
+summary(meat)
+summary(meaty)
+summary(meteor)
+summary(meek)
+
+anova(meaty, meteor, meek, meat)
+anova(meat, meaty, test = "chisq")
+anova(meat, meteor, test = "chisq")
+anova(meat, meek, test = "chisq")
+anova(meaty, meteor, test = "chisq")
+anova(meaty, meek, test = "chisq")
+anova(meek, meteor, test = "chisq")
+

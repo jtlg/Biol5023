@@ -199,7 +199,7 @@ qqp(gucci$Zresponse, "lnorm")
 poisson <- fitdistr(gucci$Zresponse, "Poisson")
 qqp(gucci$Zresponse, "pois", poisson$estimate)
 
-#plot gamma distribution ("IM THE BEST" - toad, probably)
+#plot gamma distribution (probably)
 gamma <- fitdistr(gucci$Zresponse, "gamma")
 qqp(gucci$Zresponse, "gamma", shape = gamma$estimate[[1]], rate = gamma$estimate[[2]])
 
@@ -285,7 +285,6 @@ ggplot(gucci, aes(x = conc)) +
   geom_boxplot(aes(y = Zresponse)) +
   geom_point(data = grid, aes(y = pred), colour = "red", size = 0.2)+
   facet_wrap (~odour)
-
 
 
 
